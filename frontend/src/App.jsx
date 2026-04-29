@@ -1,122 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import PrivateRoute from './components/layout/PrivateRoute'
+import DashboardLayout from './components/layout/DashboardLayout'
 
-function App() {
-  const [count, setCount] = useState(0)
+import LandingPage from './pages/public/LandingPage'
+import LoginPage from './pages/LoginPage'
+import PerfilPublico from './pages/public/PerfilPublico'
+import TorneoPublico from './pages/public/TorneoPublico'
+import EquipoPublico from './pages/public/EquipoPublico'
 
+import DashboardPage from './pages/DashboardPage'
+import LigasPage from './pages/LigasPage'
+import EquiposPage from './pages/EquiposPage'
+import JugadoresPage from './pages/JugadoresPage'
+import JornadasPage from './pages/JornadasPage'
+import CobrosPage from './pages/CobrosPage'
+import EstadisticasPage from './pages/EstadisticasPage'
+import LiguillaPage from './pages/LiguillaPage'
+import ChatbotPage from './pages/ChatbotPage'
+import AdminPanel from './pages/AdminPanel'
+
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Routes>
+      {/* Públicas */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/:username" element={<PerfilPublico />} />
+      <Route path="/:username/:ligaSlug" element={<TorneoPublico />} />
+      <Route path="/:username/:ligaSlug/equipo/:equipoSlug" element={<EquipoPublico />} />
 
-      <div className="ticks"></div>
+      {/* Privadas */}
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <DashboardLayout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<DashboardPage />} />
+        <Route path="ligas" element={<LigasPage />} />
+        <Route path="equipos/:liga_id" element={<EquiposPage />} />
+        <Route path="jugadores/:equipo_id" element={<JugadoresPage />} />
+        <Route path="jornadas/:liga_id" element={<JornadasPage />} />
+        <Route path="cobros/:liga_id" element={<CobrosPage />} />
+        <Route path="estadisticas/:liga_id" element={<EstadisticasPage />} />
+        <Route path="liguilla/:liga_id" element={<LiguillaPage />} />
+        <Route path="chatbot" element={<ChatbotPage />} />
+      </Route>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Admin */}
+      <Route
+        path="/admin"
+        element={
+          <PrivateRoute roles={['superadmin']}>
+            <DashboardLayout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<AdminPanel />} />
+      </Route>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
-
-export default App
