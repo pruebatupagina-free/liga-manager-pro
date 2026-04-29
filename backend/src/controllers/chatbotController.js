@@ -1,7 +1,6 @@
-const Anthropic = require('@anthropic-ai/sdk')
-const { Liga, Equipo, Jornada, Partido, Usuario } = require('../models')
+const { Liga, Equipo, Jornada, Usuario } = require('../models')
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
 
 async function construirContexto(ligaId) {
   const [liga, equipos, jornadas] = await Promise.all([
@@ -41,24 +40,35 @@ exports.mensaje = async (req, res, next) => {
     const sistema = await construirContexto(liga_id)
     if (!sistema) return res.status(404).json({ error: 'Liga no encontrada' })
 
-    const messages = []
+    const contents = []
     if (Array.isArray(historial)) {
       historial.slice(-10).forEach(m => {
         if (m.role === 'user' || m.role === 'assistant') {
-          messages.push({ role: m.role, content: String(m.content).slice(0, 500) })
+          const role = m.role === 'assistant' ? 'model' : 'user'
+          contents.push({ role, parts: [{ text: String(m.content).slice(0, 500) }] })
         }
       })
     }
-    messages.push({ role: 'user', content: mensaje.slice(0, 1000) })
+    contents.push({ role: 'user', parts: [{ text: mensaje.slice(0, 1000) }] })
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 512,
-      system: sistema,
-      messages,
+    const apiKey = process.env.GEMINI_API_KEY
+    const geminiRes = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: sistema }] },
+        contents,
+        generationConfig: { maxOutputTokens: 512 },
+      }),
     })
 
-    const respuesta = response.content[0]?.text || 'No pude procesar tu mensaje.'
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text()
+      return res.status(502).json({ error: 'Error al contactar Gemini', detalle: errText })
+    }
+
+    const data = await geminiRes.json()
+    const respuesta = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No pude procesar tu mensaje.'
 
     user.chat_mensajes_hoy = (user.chat_mensajes_hoy || 0) + 1
     await user.save()
