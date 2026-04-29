@@ -88,7 +88,7 @@ exports.generar = async (req, res, next) => {
       },
     }))
 
-    const partidos = await Partido.create(partidosData, { session })
+    const partidos = await Partido.create(partidosData, { session, ordered: true })
     await session.commitTransaction()
     session.endSession()
     res.status(201).json({ jornada: jornada[0], partidos })
