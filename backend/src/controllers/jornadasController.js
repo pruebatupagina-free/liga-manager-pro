@@ -1,4 +1,3 @@
-const mongoose = require('mongoose')
 const { Jornada, Partido, Equipo, Liga } = require('../models')
 const { generarRoundRobin, asignarHorariosConFijos } = require('../utils/roundRobin')
 
@@ -24,8 +23,7 @@ exports.getAll = async (req, res, next) => {
 
 // POST /api/jornadas/generar
 exports.generar = async (req, res, next) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  let jornada = null
   try {
     const { liga_id, fecha, notas } = req.body
     if (!liga_id) return res.status(400).json({ error: 'liga_id requerido' })
@@ -38,16 +36,13 @@ exports.generar = async (req, res, next) => {
     const ultimaJornada = await Jornada.findOne({ liga_id }).sort('-numero').lean()
     const numero = (ultimaJornada?.numero || 0) + 1
 
-    // Historial de byes para elegir quién descansa
     const historialByes = {}
     equipos.forEach(e => { historialByes[e._id.toString()] = e.veces_bye || 0 })
 
     const todasLasRondas = generarRoundRobin(equipos)
-    // Tomamos la ronda correspondiente (circular)
     const idxRonda = (numero - 1) % todasLasRondas.length
     let partidosDeLaRonda = todasLasRondas[idxRonda]
 
-    // Determinar equipo BYE — el que menos veces ha descansado
     const partidoBye = partidosDeLaRonda.find(p => p.es_bye)
     if (partidoBye) {
       const candidatos = equipos.filter(e => {
@@ -59,12 +54,10 @@ exports.generar = async (req, res, next) => {
         const elegido = candidatos[Math.floor(Math.random() * candidatos.length)]
         partidoBye.equipo_local_id = elegido._id
         partidoBye.equipo_bye_id = elegido._id
-        // Incrementar veces_bye
-        await Equipo.findByIdAndUpdate(elegido._id, { $inc: { veces_bye: 1 } }, { session })
+        await Equipo.findByIdAndUpdate(elegido._id, { $inc: { veces_bye: 1 } })
       }
     }
 
-    // Asignar horarios
     const config = liga.configuracion
     partidosDeLaRonda = asignarHorariosConFijos(
       partidosDeLaRonda.filter(p => !p.es_bye || p.equipo_local_id),
@@ -73,8 +66,8 @@ exports.generar = async (req, res, next) => {
         duracion_partido: config.duracion_partido || 60, num_canchas: config.num_canchas || 1 }
     )
 
-    const jornada = await Jornada.create([{ liga_id, numero, fecha, notas, estado: 'pendiente' }], { session })
-    const jId = jornada[0]._id
+    jornada = await Jornada.create({ liga_id, numero, fecha, notas, estado: 'pendiente' })
+    const jId = jornada._id
 
     const partidosData = partidosDeLaRonda.map(p => ({
       jornada_id: jId, liga_id,
@@ -88,13 +81,10 @@ exports.generar = async (req, res, next) => {
       },
     }))
 
-    const partidos = await Partido.create(partidosData, { session, ordered: true })
-    await session.commitTransaction()
-    session.endSession()
-    res.status(201).json({ jornada: jornada[0], partidos })
+    const partidos = await Partido.insertMany(partidosData)
+    res.status(201).json({ jornada, partidos })
   } catch (err) {
-    await session.abortTransaction()
-    session.endSession()
+    if (jornada) await Jornada.findByIdAndDelete(jornada._id).catch(() => {})
     next(err)
   }
 }
