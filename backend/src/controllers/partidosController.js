@@ -7,12 +7,13 @@ async function verificarAdmin(ligaId, user) {
   return user.rol === 'superadmin' || liga.admin_id.toString() === user.id
 }
 
-// GET /api/partidos?jornada_id=xxx
+// GET /api/partidos?jornada_id=xxx  OR  ?liga_id=xxx
 exports.getAll = async (req, res, next) => {
   try {
-    const { jornada_id } = req.query
-    if (!jornada_id) return res.status(400).json({ error: 'jornada_id requerido' })
-    const partidos = await Partido.find({ jornada_id })
+    const { jornada_id, liga_id } = req.query
+    if (!jornada_id && !liga_id) return res.status(400).json({ error: 'jornada_id o liga_id requerido' })
+    const filter = jornada_id ? { jornada_id } : { liga_id }
+    const partidos = await Partido.find(filter)
       .populate('equipo_local_id', 'nombre logo color_principal')
       .populate('equipo_visitante_id', 'nombre logo color_principal')
       .lean()
