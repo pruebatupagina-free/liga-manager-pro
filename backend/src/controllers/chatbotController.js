@@ -33,7 +33,11 @@ exports.mensaje = async (req, res, next) => {
     const user = await Usuario.findById(req.user.id)
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' })
 
-    if (user.chat_mensajes_hoy >= 30) {
+    const hoy = new Date().toDateString()
+    const mensajesHoy = user.chat_mensajes_hoy?.fecha?.toDateString?.() === hoy
+      ? (user.chat_mensajes_hoy?.count ?? 0)
+      : 0
+    if (mensajesHoy >= 30) {
       return res.status(429).json({ error: 'Límite de 30 mensajes diarios alcanzado. Reinicia mañana.' })
     }
 
@@ -70,9 +74,9 @@ exports.mensaje = async (req, res, next) => {
     const data = await geminiRes.json()
     const respuesta = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No pude procesar tu mensaje.'
 
-    user.chat_mensajes_hoy = (user.chat_mensajes_hoy || 0) + 1
+    user.chat_mensajes_hoy = { count: mensajesHoy + 1, fecha: new Date() }
     await user.save()
 
-    res.json({ respuesta, mensajes_hoy: user.chat_mensajes_hoy, limite: 30 })
+    res.json({ respuesta, mensajes_hoy: mensajesHoy + 1, limite: 30 })
   } catch (err) { next(err) }
 }
