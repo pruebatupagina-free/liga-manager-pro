@@ -19,12 +19,12 @@ async function seed() {
   const admin = await Usuario.create({
     email: 'admin@ligamanager.pro',
     username: 'superadmin',
-    password_hash: hash,
+    password: hash,
     nombre: 'Super Admin',
     rol: 'superadmin',
     licencia: {
       estado: 'activa',
-      plan: 'ilimitado',
+      plan: 'elite',
       fecha_vencimiento: new Date('2099-12-31'),
     },
   })
