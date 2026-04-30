@@ -37,7 +37,7 @@ exports.register = async (req, res, next) => {
   try {
     if (req.user.rol !== 'superadmin') return res.status(403).json({ error: 'Solo superadmin puede crear admins' })
 
-    const { nombre, email, password, username, rol = 'admin_liga', telefono } = req.body
+    const { nombre, email, password, username, rol = 'admin_liga', telefono, plan = 'basico', fecha_vencimiento } = req.body
     if (!nombre || !email || !password || !username) {
       return res.status(400).json({ error: 'nombre, email, password y username son requeridos' })
     }
@@ -49,10 +49,13 @@ exports.register = async (req, res, next) => {
     if (exists) return res.status(409).json({ error: 'Email o username ya en uso' })
 
     const hash = await bcrypt.hash(password, 12)
+    const licencia = { plan, estado: 'activa', fecha_inicio: new Date() }
+    if (fecha_vencimiento) licencia.fecha_vencimiento = new Date(fecha_vencimiento)
+
     const user = await Usuario.create({
       nombre, email: email.toLowerCase(), password: hash,
       rol, username: username.toLowerCase(), telefono,
-      licencia: { plan: 'basico', estado: 'activa', fecha_inicio: new Date() },
+      licencia,
     })
     res.status(201).json({ user: safeUser(user) })
   } catch (err) { next(err) }

@@ -25,7 +25,7 @@ export default function AdminPanel() {
   const [licForm, setLicForm] = useState({})
   const [search, setSearch] = useState('')
   const [crearModal, setCrearModal] = useState(false)
-  const [crearForm, setCrearForm] = useState({ nombre: '', email: '', username: '', password: '', telefono: '' })
+  const [crearForm, setCrearForm] = useState({ nombre: '', email: '', username: '', password: '', telefono: '', plan: 'basico', fecha_vencimiento: '' })
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-usuarios', search],
@@ -38,7 +38,7 @@ export default function AdminPanel() {
     onSuccess: () => {
       qc.invalidateQueries(['admin-usuarios'])
       setCrearModal(false)
-      setCrearForm({ nombre: '', email: '', username: '', password: '', telefono: '' })
+      setCrearForm({ nombre: '', email: '', username: '', password: '', telefono: '', plan: 'basico', fecha_vencimiento: '' })
       toast.success('Usuario creado')
     },
     onError: err => toast.error(err.response?.data?.error || 'Error al crear usuario'),
@@ -200,6 +200,27 @@ export default function AdminPanel() {
               />
             </div>
           ))}
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>Plan de licencia</label>
+            <select
+              value={crearForm.plan}
+              onChange={e => setCrearForm(f => ({ ...f, plan: e.target.value }))}
+              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none cursor-pointer"
+              style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+            >
+              {PLANES.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>Fecha vencimiento (opcional)</label>
+            <input
+              type="date"
+              value={crearForm.fecha_vencimiento}
+              onChange={e => setCrearForm(f => ({ ...f, fecha_vencimiento: e.target.value }))}
+              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+              style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+            />
+          </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={() => setCrearModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer" style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}>Cancelar</button>
             <button
