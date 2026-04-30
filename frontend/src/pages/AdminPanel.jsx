@@ -17,7 +17,7 @@ function tiempoRelativo(fecha) {
   return `hace ${Math.floor(hs / 24)}d`
 }
 
-const PLANES = ['basico', 'profesional', 'ilimitado']
+const PLANES = ['basico', 'pro', 'elite']
 
 export default function AdminPanel() {
   const qc = useQueryClient()
