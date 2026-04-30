@@ -2,12 +2,19 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, User } from 'lucide-react'
 import client from '../../api/client'
+import useDocumentMeta from '../../hooks/useDocumentMeta'
 
 export default function EquipoPublico() {
   const { username, ligaSlug, equipoSlug } = useParams()
   const { data, isLoading } = useQuery({
     queryKey: ['pub-equipo', username, ligaSlug, equipoSlug],
     queryFn: () => client.get(`/public/${username}/${ligaSlug}/equipo/${equipoSlug}`).then(r => r.data),
+  })
+
+  useDocumentMeta({
+    title: data?.equipo ? `${data.equipo.nombre} — Equipo` : 'Equipo',
+    description: data?.equipo ? `Plantilla y resultados de ${data.equipo.nombre}` : undefined,
+    ogImage: data?.equipo?.logo,
   })
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)', color: 'var(--color-fg-muted)' }}>Cargando...</div>

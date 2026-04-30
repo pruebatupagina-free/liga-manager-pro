@@ -2,12 +2,18 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Trophy, Calendar } from 'lucide-react'
 import client from '../../api/client'
+import useDocumentMeta from '../../hooks/useDocumentMeta'
 
 export default function PerfilPublico() {
   const { username } = useParams()
   const { data, isLoading } = useQuery({
     queryKey: ['public-perfil', username],
     queryFn: () => client.get(`/public/${username}`).then(r => r.data),
+  })
+
+  useDocumentMeta({
+    title: data?.admin ? `${data.admin.nombre || data.admin.username} — Ligas` : 'Perfil',
+    description: data?.admin ? `Ligas organizadas por ${data.admin.nombre || data.admin.username}` : undefined,
   })
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)', color: 'var(--color-fg-muted)' }}>Cargando...</div>
