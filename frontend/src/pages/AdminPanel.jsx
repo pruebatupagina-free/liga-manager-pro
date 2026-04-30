@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { Shield, Monitor, Smartphone, Circle } from 'lucide-react'
+import { Shield, Monitor, Smartphone, Circle, UserPlus } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import { estadoBadge } from '../components/ui/Badge'
 import client from '../api/client'
@@ -24,11 +24,24 @@ export default function AdminPanel() {
   const [licModal, setLicModal] = useState(null)
   const [licForm, setLicForm] = useState({})
   const [search, setSearch] = useState('')
+  const [crearModal, setCrearModal] = useState(false)
+  const [crearForm, setCrearForm] = useState({ nombre: '', email: '', username: '', password: '', telefono: '' })
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-usuarios', search],
     queryFn: () => client.get('/admin/usuarios', { params: { search, limit: 50 } }).then(r => r.data),
     refetchInterval: 30000,
+  })
+
+  const crearUsuario = useMutation({
+    mutationFn: data => client.post('/auth/register', data),
+    onSuccess: () => {
+      qc.invalidateQueries(['admin-usuarios'])
+      setCrearModal(false)
+      setCrearForm({ nombre: '', email: '', username: '', password: '', telefono: '' })
+      toast.success('Usuario creado')
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Error al crear usuario'),
   })
 
   const editarLicencia = useMutation({
@@ -63,7 +76,17 @@ export default function AdminPanel() {
             {data?.total || 0} usuarios · <span style={{ color: '#22C55E' }}>{enLinea} en línea</span>
           </p>
         </div>
-        <Shield size={28} style={{ color: '#F59E0B' }} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setCrearModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer"
+            style={{ background: 'var(--color-accent)', color: '#020617' }}
+          >
+            <UserPlus size={16} />
+            Nuevo Cliente
+          </button>
+          <Shield size={28} style={{ color: '#F59E0B' }} />
+        </div>
       </div>
 
       {/* Search */}
@@ -154,6 +177,43 @@ export default function AdminPanel() {
           </table>
         </div>
       )}
+
+      {/* Crear usuario modal */}
+      <Modal open={crearModal} onClose={() => setCrearModal(false)} title="NUEVO CLIENTE" size="sm">
+        <div className="space-y-4">
+          {[
+            { key: 'nombre', label: 'Nombre completo', type: 'text', placeholder: 'Ej: Juan Pérez' },
+            { key: 'email', label: 'Email', type: 'email', placeholder: 'correo@ejemplo.com' },
+            { key: 'username', label: 'Username', type: 'text', placeholder: 'juanperez' },
+            { key: 'password', label: 'Contraseña', type: 'password', placeholder: 'Mínimo 6 caracteres' },
+            { key: 'telefono', label: 'Teléfono (opcional)', type: 'text', placeholder: 'Ej: 8121234567' },
+          ].map(({ key, label, type, placeholder }) => (
+            <div key={key}>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>{label}</label>
+              <input
+                type={type}
+                value={crearForm[key]}
+                onChange={e => setCrearForm(f => ({ ...f, [key]: e.target.value }))}
+                placeholder={placeholder}
+                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+              />
+            </div>
+          ))}
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={() => setCrearModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer" style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}>Cancelar</button>
+            <button
+              type="button"
+              onClick={() => crearUsuario.mutate(crearForm)}
+              disabled={crearUsuario.isPending || !crearForm.nombre || !crearForm.email || !crearForm.username || !crearForm.password}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-60"
+              style={{ background: 'var(--color-accent)', color: '#020617' }}
+            >
+              {crearUsuario.isPending ? 'Creando...' : 'Crear Cliente'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Editar licencia modal */}
       <Modal open={!!licModal} onClose={() => setLicModal(null)} title="EDITAR LICENCIA" size="sm">
