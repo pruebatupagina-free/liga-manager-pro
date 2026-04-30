@@ -37,8 +37,8 @@ exports.create = [
 
       const equipo = await Equipo.create({
         liga_id, nombre, slug, color_principal: color_principal || '#000000',
-        logo: logoUrl, dia_juego, hora_fija: tiene_hora_fija ? hora_fija : null,
-        tiene_hora_fija: Boolean(tiene_hora_fija), telefono, whatsapp,
+        logo: logoUrl, dia_juego, hora_fija: (tiene_hora_fija === true || tiene_hora_fija === 'true') ? hora_fija : null,
+        tiene_hora_fija: tiene_hora_fija === true || tiene_hora_fija === 'true', telefono, whatsapp,
       })
       res.status(201).json(equipo)
     } catch (err) { next(err) }
@@ -69,7 +69,7 @@ exports.update = [
 
       const campos = ['nombre', 'dia_juego', 'hora_fija', 'telefono', 'whatsapp', 'color_principal']
       campos.forEach(c => { if (req.body[c] !== undefined) equipo[c] = req.body[c] })
-      if (req.body.tiene_hora_fija !== undefined) equipo.tiene_hora_fija = Boolean(req.body.tiene_hora_fija)
+      if (req.body.tiene_hora_fija !== undefined) equipo.tiene_hora_fija = req.body.tiene_hora_fija === true || req.body.tiene_hora_fija === 'true'
 
       if (req.body.baja !== undefined) {
         const { activa, motivo, conservar_partidos } = JSON.parse(req.body.baja)

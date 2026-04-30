@@ -157,10 +157,10 @@ export default function CobrosPage() {
                       ].map(({ label, data }) => (
                         <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--color-secondary)' }}>
                           <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{label}</p>
-                          <p className="font-semibold text-sm mt-1" style={{ color: 'var(--color-fg)' }}>
-                            ${data.pagado}/${data.total}
+                          <p className="font-semibold text-sm mt-1" style={{ color: label === 'Fijo' && !data.aplica ? 'var(--color-fg-muted)' : 'var(--color-fg)' }}>
+                            {label === 'Fijo' && !data.aplica ? 'N/A' : `$${data.pagado}/$${data.total}`}
                           </p>
-                          <ProgressBar value={data.pagado} max={data.total} color={color} />
+                          <ProgressBar value={label === 'Fijo' && !data.aplica ? 0 : data.pagado} max={label === 'Fijo' && !data.aplica ? 1 : (data.total || 1)} color={color} />
                         </div>
                       ))}
                     </div>

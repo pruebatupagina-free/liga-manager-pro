@@ -24,6 +24,7 @@ export default function ModalResultado({ partido, onClose }) {
   const [mvp, setMvp] = useState(partido.mvp_jugador_id?._id || partido.mvp_jugador_id || '')
   const [estado, setEstado] = useState(partido.estado || 'programado')
   const [woEquipo, setWoEquipo] = useState('')
+  const [quickAdd, setQuickAdd] = useState({})
 
   const { data: jugadoresLocal = [] } = useQuery({
     queryKey: ['jugadores', partido.equipo_local_id?._id || partido.equipo_local_id],
@@ -70,6 +71,19 @@ export default function ModalResultado({ partido, onClose }) {
       onClose()
     },
     onError: err => toast.error(err.response?.data?.error || 'Error al guardar'),
+  })
+
+  const crearJugador = useMutation({
+    mutationFn: ({ equipo_id, nombre }) => client.post('/jugadores', { equipo_id, nombre }),
+    onSuccess: (res, vars) => {
+      const nuevo = res.data
+      if (vars.tipo === 'gol') setGoles(arr => arr.map((x, j) => j === vars.idx ? { ...x, jugador_id: nuevo._id } : x))
+      else setTarjetas(arr => arr.map((x, j) => j === vars.idx ? { ...x, jugador_id: nuevo._id } : x))
+      qc.invalidateQueries(['jugadores', vars.equipo_id])
+      setQuickAdd(q => { const n = { ...q }; delete n[vars.key]; return n })
+      toast.success(`${nuevo.nombre} agregado`)
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Error al crear jugador'),
   })
 
   const saveArbitraje = useMutation({
@@ -187,13 +201,40 @@ export default function ModalResultado({ partido, onClose }) {
                       <div key={actualIdx} className="flex items-center gap-2 mb-2">
                         <select
                           value={goles[actualIdx]?.jugador_id || ''}
-                          onChange={e => setGoles(arr => arr.map((x, j) => j === actualIdx ? { ...x, jugador_id: e.target.value } : x))}
+                          onChange={e => {
+                            if (e.target.value === '__nuevo__') {
+                              setQuickAdd(q => ({ ...q, [`g_${actualIdx}`]: '' }))
+                              setGoles(arr => arr.map((x, j) => j === actualIdx ? { ...x, jugador_id: '' } : x))
+                            } else {
+                              setGoles(arr => arr.map((x, j) => j === actualIdx ? { ...x, jugador_id: e.target.value } : x))
+                            }
+                          }}
                           className="flex-1 px-3 py-2 rounded-xl text-sm outline-none cursor-pointer"
                           style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
                         >
                           <option value="">Jugador</option>
+                          <option value="__nuevo__">+ Nuevo jugador</option>
                           {jugadoresEq.map(j => <option key={j._id} value={j._id}>{j.nombre}</option>)}
                         </select>
+                        {quickAdd[`g_${actualIdx}`] !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={quickAdd[`g_${actualIdx}`]}
+                              onChange={e => setQuickAdd(q => ({ ...q, [`g_${actualIdx}`]: e.target.value }))}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && quickAdd[`g_${actualIdx}`].trim()) crearJugador.mutate({ equipo_id: id, nombre: quickAdd[`g_${actualIdx}`].trim(), tipo: 'gol', idx: actualIdx, key: `g_${actualIdx}` })
+                                if (e.key === 'Escape') setQuickAdd(q => { const n = { ...q }; delete n[`g_${actualIdx}`]; return n })
+                              }}
+                              placeholder="Nombre"
+                              className="w-28 px-2 py-2 rounded-xl text-xs outline-none"
+                              style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-accent)', color: 'var(--color-fg)' }}
+                            />
+                            <button onClick={() => quickAdd[`g_${actualIdx}`]?.trim() && crearJugador.mutate({ equipo_id: id, nombre: quickAdd[`g_${actualIdx}`].trim(), tipo: 'gol', idx: actualIdx, key: `g_${actualIdx}` })} className="text-xs px-1.5 py-1 rounded-lg cursor-pointer" style={{ background: '#22C55E22', color: '#22C55E' }}>✓</button>
+                            <button onClick={() => setQuickAdd(q => { const n = { ...q }; delete n[`g_${actualIdx}`]; return n })} className="text-xs px-1.5 py-1 rounded-lg cursor-pointer" style={{ color: 'var(--color-fg-muted)' }}>✕</button>
+                          </div>
+                        )}
                         <input
                           type="number" min="0" max="120" placeholder="Min"
                           value={goles[actualIdx]?.minuto || ''}
@@ -236,13 +277,40 @@ export default function ModalResultado({ partido, onClose }) {
                       <div key={actualIdx} className="flex items-center gap-2 mb-2">
                         <select
                           value={tarjetas[actualIdx]?.jugador_id || ''}
-                          onChange={e => setTarjetas(arr => arr.map((x, j) => j === actualIdx ? { ...x, jugador_id: e.target.value } : x))}
+                          onChange={e => {
+                            if (e.target.value === '__nuevo__') {
+                              setQuickAdd(q => ({ ...q, [`t_${actualIdx}`]: '' }))
+                              setTarjetas(arr => arr.map((x, j) => j === actualIdx ? { ...x, jugador_id: '' } : x))
+                            } else {
+                              setTarjetas(arr => arr.map((x, j) => j === actualIdx ? { ...x, jugador_id: e.target.value } : x))
+                            }
+                          }}
                           className="flex-1 px-3 py-2 rounded-xl text-sm outline-none cursor-pointer"
                           style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
                         >
                           <option value="">Jugador</option>
+                          <option value="__nuevo__">+ Nuevo jugador</option>
                           {jugadoresEq.map(j => <option key={j._id} value={j._id}>{j.nombre}</option>)}
                         </select>
+                        {quickAdd[`t_${actualIdx}`] !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={quickAdd[`t_${actualIdx}`]}
+                              onChange={e => setQuickAdd(q => ({ ...q, [`t_${actualIdx}`]: e.target.value }))}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && quickAdd[`t_${actualIdx}`].trim()) crearJugador.mutate({ equipo_id: id, nombre: quickAdd[`t_${actualIdx}`].trim(), tipo: 'tarjeta', idx: actualIdx, key: `t_${actualIdx}` })
+                                if (e.key === 'Escape') setQuickAdd(q => { const n = { ...q }; delete n[`t_${actualIdx}`]; return n })
+                              }}
+                              placeholder="Nombre"
+                              className="w-28 px-2 py-2 rounded-xl text-xs outline-none"
+                              style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-accent)', color: 'var(--color-fg)' }}
+                            />
+                            <button onClick={() => quickAdd[`t_${actualIdx}`]?.trim() && crearJugador.mutate({ equipo_id: id, nombre: quickAdd[`t_${actualIdx}`].trim(), tipo: 'tarjeta', idx: actualIdx, key: `t_${actualIdx}` })} className="text-xs px-1.5 py-1 rounded-lg cursor-pointer" style={{ background: '#22C55E22', color: '#22C55E' }}>✓</button>
+                            <button onClick={() => setQuickAdd(q => { const n = { ...q }; delete n[`t_${actualIdx}`]; return n })} className="text-xs px-1.5 py-1 rounded-lg cursor-pointer" style={{ color: 'var(--color-fg-muted)' }}>✕</button>
+                          </div>
+                        )}
                         <input
                           type="number" min="0" max="120" placeholder="Min"
                           value={tarjetas[actualIdx]?.minuto || ''}
