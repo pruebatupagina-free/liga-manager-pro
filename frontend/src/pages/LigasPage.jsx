@@ -50,6 +50,7 @@ const DEFAULT_FORM = {
   cuota_inscripcion: 0, costo_arbitraje: 0, pago_fijo: 0,
   tiene_liguilla: false,
   criterios_desempate: ['diferencia_goles','goles_favor','menos_goles_contra'],
+  reglamento: '',
 }
 
 export default function LigasPage() {
@@ -102,6 +103,7 @@ export default function LigasPage() {
       pago_fijo: liga.configuracion?.pago_fijo_temporada || 0,
       tiene_liguilla: liga.configuracion?.liguilla?.activa || false,
       criterios_desempate: liga.configuracion?.criterios_desempate || DEFAULT_FORM.criterios_desempate,
+      reglamento: liga.reglamento || '',
     })
     setModalOpen(true)
   }
@@ -126,6 +128,7 @@ export default function LigasPage() {
         liguilla: { activa: form.tiene_liguilla },
         criterios_desempate: form.criterios_desempate,
       },
+      reglamento: form.reglamento,
     })
   }
 
@@ -401,6 +404,21 @@ export default function LigasPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Reglamento */}
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>
+              Reglamento de la liga <span style={{ color: 'var(--color-fg-muted)', fontWeight: 400 }}>(visible en la página pública)</span>
+            </label>
+            <textarea
+              rows={5}
+              value={form.reglamento}
+              onChange={e => setForm(f => ({ ...f, reglamento: e.target.value }))}
+              placeholder="Escribe las reglas, sanciones y normas del torneo..."
+              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none resize-y"
+              style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)', minHeight: 80 }}
+            />
           </div>
 
           <div className="flex gap-3 pt-2">

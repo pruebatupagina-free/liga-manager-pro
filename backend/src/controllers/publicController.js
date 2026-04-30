@@ -23,12 +23,13 @@ exports.liga = async (req, res, next) => {
     const liga = await Liga.findOne({ admin_id: admin._id, slug: req.params.ligaSlug }).lean()
     if (!liga) return res.status(404).json({ error: 'Liga no encontrada' })
 
-    const [equipos, jornadas] = await Promise.all([
+    const [equipos, jornadas, hasSalonFama] = await Promise.all([
       Equipo.find({ liga_id: liga._id, 'baja.activa': { $ne: true } }).select('nombre logo slug color_principal').lean(),
       Jornada.find({ liga_id: liga._id }).sort('numero').select('numero estado fecha').lean(),
+      Liga.exists({ admin_id: admin._id, estado: 'finalizada' }),
     ])
 
-    res.json({ liga, equipos, jornadas, admin: { username: admin.username, nombre: admin.nombre } })
+    res.json({ liga, equipos, jornadas, admin: { username: admin.username, nombre: admin.nombre }, hasSalonFama: !!hasSalonFama })
   } catch (err) { next(err) }
 }
 
@@ -37,6 +38,14 @@ async function loadLigaPublic(req) {
   if (!admin) return null
   const liga = await Liga.findOne({ admin_id: admin._id, slug: req.params.ligaSlug }).lean()
   return liga
+}
+
+async function loadCtx(req) {
+  const admin = await Usuario.findOne({ username: req.params.username }).lean()
+  if (!admin) return null
+  const liga = await Liga.findOne({ admin_id: admin._id, slug: req.params.ligaSlug }).lean()
+  if (!liga) return null
+  return { admin, liga }
 }
 
 // GET /api/public/:username/:ligaSlug/tabla
@@ -53,6 +62,41 @@ exports.tabla = async (req, res, next) => {
 
     const tabla = calcularTabla(liga, equipos, partidos)
     res.json(tabla)
+  } catch (err) { next(err) }
+}
+
+// GET /api/public/:username/:ligaSlug/estadisticas-defensivas
+exports.estadisticasDefensivas = async (req, res, next) => {
+  try {
+    const liga = await loadLigaPublic(req)
+    if (!liga) return res.status(404).json({ error: 'No encontrado' })
+
+    const [equipos, partidos] = await Promise.all([
+      Equipo.find({ liga_id: liga._id }).select('_id nombre').lean(),
+      Partido.find({ liga_id: liga._id, estado: { $in: ['jugado', 'wo'] }, es_bye: { $ne: true } })
+        .select('equipo_local_id equipo_visitante_id goles_local goles_visitante estado createdAt')
+        .sort({ createdAt: -1 })
+        .lean(),
+    ])
+
+    const result = equipos.map(e => {
+      const eid = e._id.toString()
+      const propios = partidos.filter(p =>
+        p.equipo_local_id?.toString() === eid || p.equipo_visitante_id?.toString() === eid
+      )
+      const racha = propios.slice(0, 5).map(p => {
+        if (p.estado === 'wo') return 'D'
+        const esLocal = p.equipo_local_id?.toString() === eid
+        const gf = esLocal ? (p.goles_local ?? 0) : (p.goles_visitante ?? 0)
+        const gc = esLocal ? (p.goles_visitante ?? 0) : (p.goles_local ?? 0)
+        if (gf > gc) return 'V'
+        if (gf === gc) return 'E'
+        return 'D'
+      }).reverse()
+      return { equipo_id: eid, racha }
+    })
+
+    res.json(result)
   } catch (err) { next(err) }
 }
 
@@ -163,6 +207,9 @@ exports.jornadaDetalle = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+// GET /api/public/:username/:ligaSlug/concentrado/:numero — alias optimizado de jornadaDetalle
+exports.concentrado = exports.jornadaDetalle
+
 // GET /api/public/:username/:ligaSlug/tarjetas
 exports.tarjetas = async (req, res, next) => {
   try {
@@ -234,6 +281,79 @@ exports.sanciones = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+// GET /api/public/:username/:ligaSlug/salon-fama
+exports.salonFama = async (req, res, next) => {
+  try {
+    const ctx = await loadCtx(req)
+    if (!ctx) return res.status(404).json({ error: 'No encontrado' })
+    const { admin } = ctx
+
+    const ligasFinalizadas = await Liga.find({ admin_id: admin._id, estado: 'finalizada' }).lean()
+    if (!ligasFinalizadas.length) return res.json({ campeonatos: [], goleadores: [], mvps: [] })
+
+    const ligaIds = ligasFinalizadas.map(l => l._id)
+    const { calcularTabla } = require('./estadisticasController')
+
+    // Campeón por liga finalizada
+    const campeonatos = []
+    for (const l of ligasFinalizadas) {
+      const [equipos, partidos] = await Promise.all([
+        Equipo.find({ liga_id: l._id }).lean(),
+        Partido.find({ liga_id: l._id, estado: { $in: ['jugado', 'wo'] } }).lean(),
+      ])
+      if (!equipos.length) continue
+      const tabla = calcularTabla(l, equipos, partidos)
+      if (tabla.length) campeonatos.push({ liga: { nombre: l.nombre, slug: l.slug }, campeon: tabla[0].equipo })
+    }
+
+    // Top 5 goleadores históricos
+    const golesAll = await Gol.find({ tipo: { $ne: 'autogol' } })
+      .populate({ path: 'partido_id', match: { liga_id: { $in: ligaIds } }, select: 'liga_id' })
+      .populate('jugador_id', 'nombre foto')
+      .populate('equipo_id', 'nombre logo color_principal')
+      .lean()
+
+    const goleadoresMap = {}
+    golesAll.filter(g => g.partido_id).forEach(g => {
+      const id = g.jugador_id?._id?.toString()
+      if (!id) return
+      if (!goleadoresMap[id]) goleadoresMap[id] = { jugador: g.jugador_id, equipo: g.equipo_id, goles: 0 }
+      goleadoresMap[id].goles++
+    })
+
+    // Top 5 MVPs históricos
+    const partidosConMvp = await Partido.find({
+      liga_id: { $in: ligaIds }, estado: 'jugado', mvp_jugador_id: { $ne: null },
+    })
+      .populate('mvp_jugador_id', 'nombre foto')
+      .populate('mvp_equipo_id', 'nombre logo color_principal')
+      .lean()
+
+    const mvpMap = {}
+    partidosConMvp.forEach(p => {
+      const id = p.mvp_jugador_id?._id?.toString()
+      if (!id) return
+      if (!mvpMap[id]) mvpMap[id] = { jugador: p.mvp_jugador_id, equipo: p.mvp_equipo_id, mvps: 0 }
+      mvpMap[id].mvps++
+    })
+
+    res.json({
+      campeonatos,
+      goleadores: Object.values(goleadoresMap).sort((a, b) => b.goles - a.goles).slice(0, 5),
+      mvps: Object.values(mvpMap).sort((a, b) => b.mvps - a.mvps).slice(0, 5),
+    })
+  } catch (err) { next(err) }
+}
+
+// GET /api/public/:username/:ligaSlug/reglamento
+exports.reglamento = async (req, res, next) => {
+  try {
+    const liga = await loadLigaPublic(req)
+    if (!liga) return res.status(404).json({ error: 'No encontrado' })
+    res.json({ reglamento: liga.reglamento || '' })
+  } catch (err) { next(err) }
+}
+
 // GET /api/public/:username/:ligaSlug/equipo/:equipoSlug
 exports.equipo = async (req, res, next) => {
   try {
@@ -244,21 +364,40 @@ exports.equipo = async (req, res, next) => {
     const equipo = await Equipo.findOne({ liga_id: liga._id, slug: req.params.equipoSlug }).lean()
     if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' })
 
-    const jugadores = await Jugador.find({ equipo_id: equipo._id, activo: true })
-      .select('nombre foto posicion numero_camiseta')
-      .lean()
+    const [jugadores, partidos] = await Promise.all([
+      Jugador.find({ equipo_id: equipo._id, activo: true })
+        .select('nombre foto posicion numero_camiseta')
+        .lean(),
+      Partido.find({
+        liga_id: liga._id,
+        $or: [{ equipo_local_id: equipo._id }, { equipo_visitante_id: equipo._id }],
+        estado: { $in: ['jugado', 'pendiente', 'wo'] },
+      })
+        .populate('equipo_local_id', 'nombre logo color_principal slug')
+        .populate('equipo_visitante_id', 'nombre logo color_principal slug')
+        .populate('jornada_id', 'numero fecha')
+        .sort('createdAt')
+        .lean(),
+    ])
 
-    const partidos = await Partido.find({
-      liga_id: liga._id,
-      $or: [{ equipo_local_id: equipo._id }, { equipo_visitante_id: equipo._id }],
-      estado: { $in: ['jugado', 'pendiente', 'wo'] },
+    const partidoIds = partidos.filter(p => p.estado === 'jugado' || p.estado === 'wo').map(p => p._id)
+    const goles = await Gol.find({
+      partido_id: { $in: partidoIds },
+      equipo_id: equipo._id,
+      tipo: { $ne: 'autogol' },
+    }).select('jugador_id').lean()
+
+    const golesPorJugador = {}
+    goles.forEach(g => {
+      const jid = g.jugador_id?.toString()
+      if (jid) golesPorJugador[jid] = (golesPorJugador[jid] || 0) + 1
     })
-      .populate('equipo_local_id', 'nombre logo color_principal slug')
-      .populate('equipo_visitante_id', 'nombre logo color_principal slug')
-      .populate('jornada_id', 'numero fecha')
-      .sort('createdAt')
-      .lean()
 
-    res.json({ equipo, jugadores, partidos })
+    const jugadoresConGoles = jugadores.map(j => ({
+      ...j,
+      goles_temporada: golesPorJugador[j._id?.toString()] || 0,
+    }))
+
+    res.json({ equipo, jugadores: jugadoresConGoles, partidos })
   } catch (err) { next(err) }
 }

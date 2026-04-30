@@ -48,10 +48,12 @@ exports.update = async (req, res, next) => {
     if (req.user.rol !== 'superadmin' && !checkOwner(liga, req.user.id)) {
       return res.status(403).json({ error: 'Sin acceso' })
     }
-    const { nombre, estado, configuracion } = req.body
+    const { nombre, estado, configuracion, reglamento, galeria } = req.body
     if (nombre) liga.nombre = nombre
     if (estado) liga.estado = estado
     if (configuracion) liga.configuracion = { ...liga.configuracion.toObject(), ...configuracion }
+    if (reglamento !== undefined) liga.reglamento = reglamento
+    if (galeria) liga.galeria = galeria
     await liga.save()
     res.json(liga)
   } catch (err) { next(err) }

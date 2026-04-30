@@ -24,6 +24,8 @@ const ligaSchema = new mongoose.Schema(
       tiene_liguilla: { type: Boolean, default: false },
       criterios_desempate: [{ type: String }],
     },
+    reglamento: { type: String, default: '' },
+    galeria: [{ type: String }],
   },
   { timestamps: true }
 )
