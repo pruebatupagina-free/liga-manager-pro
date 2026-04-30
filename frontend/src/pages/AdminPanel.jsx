@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { Shield, Monitor, Smartphone, Circle, UserPlus } from 'lucide-react'
+import { Shield, Monitor, Smartphone, Circle, UserPlus, Pencil, Trash2 } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import { estadoBadge } from '../components/ui/Badge'
 import client from '../api/client'
@@ -26,6 +26,9 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('')
   const [crearModal, setCrearModal] = useState(false)
   const [crearForm, setCrearForm] = useState({ nombre: '', email: '', username: '', password: '', telefono: '', plan: 'basico', fecha_vencimiento: '' })
+  const [editModal, setEditModal] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-usuarios', search],
@@ -44,11 +47,28 @@ export default function AdminPanel() {
     onError: err => toast.error(err.response?.data?.error || 'Error al crear usuario'),
   })
 
+  const editarUsuario = useMutation({
+    mutationFn: ({ id, data }) => client.put(`/admin/usuarios/${id}`, data),
+    onSuccess: () => { qc.invalidateQueries(['admin-usuarios']); setEditModal(null); toast.success('Usuario actualizado') },
+    onError: err => toast.error(err.response?.data?.error || 'Error al actualizar'),
+  })
+
+  const eliminarUsuario = useMutation({
+    mutationFn: id => client.delete(`/admin/usuarios/${id}`),
+    onSuccess: () => { qc.invalidateQueries(['admin-usuarios']); setDeleteConfirm(null); toast.success('Usuario eliminado') },
+    onError: err => toast.error(err.response?.data?.error || 'Error al eliminar'),
+  })
+
   const editarLicencia = useMutation({
     mutationFn: ({ id, data }) => client.put(`/admin/usuarios/${id}/licencia`, data),
     onSuccess: () => { qc.invalidateQueries(['admin-usuarios']); setLicModal(null); toast.success('Licencia actualizada') },
     onError: err => toast.error(err.response?.data?.error || 'Error'),
   })
+
+  function openEdit(user) {
+    setEditModal(user)
+    setEditForm({ nombre: user.nombre || '', email: user.email || '', username: user.username || '', telefono: user.telefono || '' })
+  }
 
   function openLic(user) {
     setLicModal(user)
@@ -162,13 +182,33 @@ export default function AdminPanel() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => openLic(u)}
-                        className="px-3 py-1 rounded-lg text-xs font-medium cursor-pointer"
-                        style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}
-                      >
-                        Licencia
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openLic(u)}
+                          className="px-3 py-1 rounded-lg text-xs font-medium cursor-pointer"
+                          style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}
+                        >
+                          Licencia
+                        </button>
+                        <button
+                          onClick={() => openEdit(u)}
+                          className="p-1.5 rounded-lg cursor-pointer"
+                          style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}
+                          title="Editar usuario"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        {u.rol !== 'superadmin' && (
+                          <button
+                            onClick={() => setDeleteConfirm(u)}
+                            className="p-1.5 rounded-lg cursor-pointer"
+                            style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}
+                            title="Eliminar usuario"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -234,6 +274,68 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Editar usuario modal */}
+      <Modal open={!!editModal} onClose={() => setEditModal(null)} title="EDITAR USUARIO" size="sm">
+        {editModal && (
+          <div className="space-y-4">
+            {[
+              { key: 'nombre', label: 'Nombre completo', type: 'text' },
+              { key: 'email', label: 'Email', type: 'email' },
+              { key: 'username', label: 'Username', type: 'text' },
+              { key: 'telefono', label: 'Teléfono (opcional)', type: 'text' },
+            ].map(({ key, label, type }) => (
+              <div key={key}>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>{label}</label>
+                <input
+                  type={type}
+                  value={editForm[key]}
+                  onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+                />
+              </div>
+            ))}
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={() => setEditModal(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer" style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}>Cancelar</button>
+              <button
+                type="button"
+                onClick={() => editarUsuario.mutate({ id: editModal._id, data: editForm })}
+                disabled={editarUsuario.isPending}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-60"
+                style={{ background: '#3B82F6', color: '#fff' }}
+              >
+                {editarUsuario.isPending ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Confirmar eliminación */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="ELIMINAR USUARIO" size="sm">
+        {deleteConfirm && (
+          <div className="space-y-5">
+            <p className="text-sm" style={{ color: 'var(--color-fg)' }}>
+              ¿Eliminar a <strong>{deleteConfirm.username}</strong> ({deleteConfirm.email})?
+              <br />
+              <span style={{ color: 'var(--color-fg-muted)' }}>Esta acción no se puede deshacer.</span>
+            </p>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer" style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}>Cancelar</button>
+              <button
+                type="button"
+                onClick={() => eliminarUsuario.mutate(deleteConfirm._id)}
+                disabled={eliminarUsuario.isPending}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-60"
+                style={{ background: '#EF4444', color: '#fff' }}
+              >
+                {eliminarUsuario.isPending ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Editar licencia modal */}

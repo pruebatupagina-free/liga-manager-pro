@@ -30,6 +30,32 @@ exports.getUsuario = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+// PUT /api/admin/usuarios/:id
+exports.editarUsuario = async (req, res, next) => {
+  try {
+    const { nombre, email, username, telefono } = req.body
+    const user = await Usuario.findById(req.params.id)
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+    if (email && email !== user.email) {
+      const existe = await Usuario.findOne({ email: email.toLowerCase(), _id: { $ne: user._id } })
+      if (existe) return res.status(409).json({ error: 'Email ya en uso' })
+      user.email = email.toLowerCase()
+    }
+    if (username && username !== user.username) {
+      const existe = await Usuario.findOne({ username: username.toLowerCase(), _id: { $ne: user._id } })
+      if (existe) return res.status(409).json({ error: 'Username ya en uso' })
+      user.username = username.toLowerCase()
+    }
+    if (nombre) user.nombre = nombre
+    if (telefono !== undefined) user.telefono = telefono
+
+    await user.save()
+    const { password, __v, ...safe } = user.toObject()
+    res.json(safe)
+  } catch (err) { next(err) }
+}
+
 // PUT /api/admin/usuarios/:id/licencia
 exports.editarLicencia = async (req, res, next) => {
   try {
