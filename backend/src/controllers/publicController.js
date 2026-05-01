@@ -29,7 +29,8 @@ exports.liga = async (req, res, next) => {
       Liga.exists({ admin_id: admin._id, estado: 'finalizada' }),
     ])
 
-    res.json({ liga, equipos, jornadas, admin: { username: admin.username, nombre: admin.nombre }, hasSalonFama: !!hasSalonFama })
+    const { galeria: _g, ...ligaSin } = liga
+    res.json({ liga: { ...ligaSin, galeria_count: (liga.galeria || []).length }, equipos, jornadas, admin: { username: admin.username, nombre: admin.nombre }, hasSalonFama: !!hasSalonFama })
   } catch (err) { next(err) }
 }
 
@@ -342,6 +343,15 @@ exports.salonFama = async (req, res, next) => {
       goleadores: Object.values(goleadoresMap).sort((a, b) => b.goles - a.goles).slice(0, 5),
       mvps: Object.values(mvpMap).sort((a, b) => b.mvps - a.mvps).slice(0, 5),
     })
+  } catch (err) { next(err) }
+}
+
+// GET /api/public/:username/:ligaSlug/galeria
+exports.galeriaPublic = async (req, res, next) => {
+  try {
+    const liga = await loadLigaPublic(req)
+    if (!liga) return res.status(404).json({ error: 'No encontrado' })
+    res.json({ galeria: liga.galeria || [] })
   } catch (err) { next(err) }
 }
 

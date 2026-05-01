@@ -1,4 +1,4 @@
-const { Liga, Jornada } = require('../models')
+const { Liga, Jornada, Equipo } = require('../models')
 const slugify = require('../utils/slugify')
 
 function checkOwner(liga, userId) {
@@ -56,6 +56,77 @@ exports.update = async (req, res, next) => {
     if (galeria) liga.galeria = galeria
     await liga.save()
     res.json(liga)
+  } catch (err) { next(err) }
+}
+
+// POST /api/ligas/:id/clonar
+exports.clonar = async (req, res, next) => {
+  try {
+    const liga = await Liga.findById(req.params.id).lean()
+    if (!liga) return res.status(404).json({ error: 'Liga no encontrada' })
+    if (req.user.rol !== 'superadmin' && liga.admin_id.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Sin acceso' })
+    }
+    const year = new Date().getFullYear()
+    const baseName = `${liga.nombre} (copia)`
+    let slug = `${slugify(baseName)}-${year}`
+    const exists = await Liga.findOne({ slug })
+    if (exists) slug = `${slug}-${Date.now()}`
+    const nueva = await Liga.create({
+      admin_id: liga.admin_id,
+      nombre: baseName,
+      slug,
+      configuracion: liga.configuracion,
+      reglamento: liga.reglamento || '',
+    })
+    res.status(201).json(nueva)
+  } catch (err) { next(err) }
+}
+
+// POST /api/ligas/:id/galeria  — body: { imagen: 'data:image/jpeg;base64,...' }
+exports.galeriaAdd = async (req, res, next) => {
+  try {
+    const liga = await Liga.findById(req.params.id)
+    if (!liga) return res.status(404).json({ error: 'Liga no encontrada' })
+    if (req.user.rol !== 'superadmin' && liga.admin_id.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Sin acceso' })
+    }
+    const { imagen } = req.body
+    if (!imagen || !imagen.startsWith('data:image')) return res.status(400).json({ error: 'imagen requerida (base64)' })
+    if (liga.galeria.length >= 20) return res.status(400).json({ error: 'Máximo 20 fotos por galería' })
+    liga.galeria.push(imagen)
+    await liga.save()
+    res.json({ galeria_count: liga.galeria.length })
+  } catch (err) { next(err) }
+}
+
+// DELETE /api/ligas/:id/galeria/:idx
+exports.galeriaDelete = async (req, res, next) => {
+  try {
+    const liga = await Liga.findById(req.params.id)
+    if (!liga) return res.status(404).json({ error: 'Liga no encontrada' })
+    if (req.user.rol !== 'superadmin' && liga.admin_id.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Sin acceso' })
+    }
+    const idx = Number(req.params.idx)
+    if (isNaN(idx) || idx < 0 || idx >= liga.galeria.length) {
+      return res.status(400).json({ error: 'Índice inválido' })
+    }
+    liga.galeria.splice(idx, 1)
+    await liga.save()
+    res.json({ galeria_count: liga.galeria.length })
+  } catch (err) { next(err) }
+}
+
+// GET /api/ligas/:id/galeria
+exports.galeriaGet = async (req, res, next) => {
+  try {
+    const liga = await Liga.findById(req.params.id).select('galeria admin_id').lean()
+    if (!liga) return res.status(404).json({ error: 'Liga no encontrada' })
+    if (req.user.rol !== 'superadmin' && liga.admin_id.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Sin acceso' })
+    }
+    res.json({ galeria: liga.galeria || [] })
   } catch (err) { next(err) }
 }
 

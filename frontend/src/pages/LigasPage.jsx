@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Plus, Trophy, Share2, Edit, ExternalLink, GripVertical } from 'lucide-react'
+import { Plus, Trophy, Share2, Edit, ExternalLink, GripVertical, Copy, Image, X, Upload, Trash2 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -53,12 +53,35 @@ const DEFAULT_FORM = {
   reglamento: '',
 }
 
+async function compressImage(file, maxDim = 900, quality = 0.82) {
+  return new Promise(resolve => {
+    const reader = new FileReader()
+    reader.onload = e => {
+      const img = new window.Image()
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function LigasPage() {
   const qc = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
   const [shareModal, setShareModal] = useState(null)
+  const [galeriaModal, setGaleriaModal] = useState(null)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(DEFAULT_FORM)
+  const [galeriaFotos, setGaleriaFotos] = useState([])
+  const [galeriaLoading, setGaleriaLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor))
 
@@ -66,6 +89,48 @@ export default function LigasPage() {
     queryKey: ['ligas'],
     queryFn: () => client.get('/ligas').then(r => r.data),
   })
+
+  const clonar = useMutation({
+    mutationFn: id => client.post(`/ligas/${id}/clonar`),
+    onSuccess: () => { qc.invalidateQueries(['ligas']); toast.success('Liga clonada') },
+    onError: err => toast.error(err.response?.data?.error || 'Error al clonar'),
+  })
+
+  async function openGaleria(liga) {
+    setGaleriaModal(liga)
+    setGaleriaLoading(true)
+    try {
+      const { data } = await client.get(`/ligas/${liga._id}/galeria`)
+      setGaleriaFotos(data.galeria || [])
+    } catch { setGaleriaFotos([]) }
+    setGaleriaLoading(false)
+  }
+
+  async function handleUploadFotos(e) {
+    const files = Array.from(e.target.files)
+    if (!files.length) return
+    setUploading(true)
+    for (const file of files) {
+      try {
+        const imagen = await compressImage(file)
+        await client.post(`/ligas/${galeriaModal._id}/galeria`, { imagen })
+        setGaleriaFotos(prev => [...prev, imagen])
+      } catch (err) {
+        toast.error(err.response?.data?.error || 'Error subiendo foto')
+      }
+    }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  async function handleDeleteFoto(idx) {
+    try {
+      await client.delete(`/ligas/${galeriaModal._id}/galeria/${idx}`)
+      setGaleriaFotos(prev => prev.filter((_, i) => i !== idx))
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Error al eliminar')
+    }
+  }
 
   const save = useMutation({
     mutationFn: data => editId
@@ -205,6 +270,23 @@ export default function LigasPage() {
                   aria-label="Compartir liga"
                 >
                   <Share2 size={18} />
+                </button>
+                <button
+                  onClick={() => openGaleria(liga)}
+                  className="p-2 rounded-xl hover:bg-white/5 transition-all cursor-pointer"
+                  style={{ color: 'var(--color-fg-muted)' }}
+                  aria-label="Galería de fotos"
+                >
+                  <Image size={18} />
+                </button>
+                <button
+                  onClick={() => clonar.mutate(liga._id)}
+                  disabled={clonar.isPending}
+                  className="p-2 rounded-xl hover:bg-white/5 transition-all cursor-pointer disabled:opacity-40"
+                  style={{ color: 'var(--color-fg-muted)' }}
+                  aria-label="Clonar liga"
+                >
+                  <Copy size={18} />
                 </button>
                 <button
                   onClick={() => openEdit(liga)}
@@ -440,6 +522,49 @@ export default function LigasPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Galería modal */}
+      <Modal open={!!galeriaModal} onClose={() => setGaleriaModal(null)} title="GALERÍA DE FOTOS" size="lg">
+        {galeriaModal && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+                {galeriaFotos.length}/20 fotos · Visible en la página pública cuando haya al menos 1 foto
+              </p>
+              <label className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all ${uploading ? 'opacity-60 pointer-events-none' : ''}`}
+                style={{ background: 'var(--color-accent)', color: '#020617' }}>
+                <Upload size={14} />
+                {uploading ? 'Subiendo...' : 'Subir fotos'}
+                <input type="file" multiple accept="image/*" className="hidden" onChange={handleUploadFotos} disabled={uploading} />
+              </label>
+            </div>
+
+            {galeriaLoading ? (
+              <div className="py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Cargando...</div>
+            ) : galeriaFotos.length === 0 ? (
+              <div className="py-12 text-center rounded-2xl" style={{ border: '2px dashed var(--color-border)' }}>
+                <Image size={36} className="mx-auto mb-3" style={{ color: 'var(--color-fg-muted)', opacity: 0.4 }} />
+                <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>Sin fotos aún. Sube la primera foto.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {galeriaFotos.map((src, i) => (
+                  <div key={i} className="relative group rounded-xl overflow-hidden aspect-square">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => handleDeleteFoto(i)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                      style={{ background: '#EF4444', color: '#fff' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* Share modal */}

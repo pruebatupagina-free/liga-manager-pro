@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Trophy, Calendar, BarChart2, Users, Star, Home, BookOpen, Award, Target, TrendingUp,
+  Trophy, Calendar, BarChart2, Users, Star, Home, BookOpen, Award, Target, TrendingUp, Image, X,
 } from 'lucide-react'
 import client from '../../api/client'
 import useDocumentMeta from '../../hooks/useDocumentMeta'
@@ -684,6 +684,82 @@ function TabEstadisticas({ username, ligaSlug }) {
   )
 }
 
+// ─── Tab: GALERÍA ─────────────────────────────────────────────────────────────
+
+function TabGaleria({ username, ligaSlug }) {
+  const [lightbox, setLightbox] = useState(null)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['pub-galeria', username, ligaSlug],
+    queryFn: () => client.get(`/public/${username}/${ligaSlug}/galeria`).then(r => r.data),
+  })
+
+  const fotos = data?.galeria || []
+
+  if (isLoading) return <LoadingState />
+  if (!fotos.length) return <EmptyState icon={Image} text="Sin fotos en la galería" />
+
+  return (
+    <>
+      <div className="columns-2 sm:columns-3 gap-2 space-y-2">
+        {fotos.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt={`Foto ${i + 1}`}
+            className="w-full rounded-xl cursor-pointer hover:opacity-90 transition-opacity block mb-2"
+            onClick={() => setLightbox(i)}
+          />
+        ))}
+      </div>
+
+      {lightbox !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.92)' }}
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={fotos[lightbox]}
+            alt=""
+            className="max-w-full max-h-full rounded-2xl object-contain"
+            onClick={e => e.stopPropagation()}
+          />
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3">
+            {lightbox > 0 && (
+              <button
+                onClick={e => { e.stopPropagation(); setLightbox(lightbox - 1) }}
+                className="px-5 py-2 rounded-xl text-sm font-medium cursor-pointer"
+                style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}
+              >
+                ← Anterior
+              </button>
+            )}
+            <span className="px-4 py-2 text-sm rounded-xl" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+              {lightbox + 1} / {fotos.length}
+            </span>
+            {lightbox < fotos.length - 1 && (
+              <button
+                onClick={e => { e.stopPropagation(); setLightbox(lightbox + 1) }}
+                className="px-5 py-2 rounded-xl text-sm font-medium cursor-pointer"
+                style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}
+              >
+                Siguiente →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 // ─── Tab: REGLAMENTO ──────────────────────────────────────────────────────────
 
 function TabReglamento({ reglamento }) {
@@ -720,6 +796,7 @@ export default function TorneoPublico() {
   const { liga, equipos, jornadas, hasSalonFama } = data
   const jugadas = jornadas.filter(j => j.estado === 'finalizada').length
   const showReglamento = liga.reglamento?.trim().length > 0
+  const showGaleria = (liga.galeria_count || 0) > 0
 
   const TABS = [
     { key: 'inicio', label: 'Inicio', icon: Home },
@@ -729,6 +806,7 @@ export default function TorneoPublico() {
     { key: 'equipos', label: 'Equipos', icon: Users },
     { key: 'mvp', label: 'MVP', icon: Star },
     { key: 'estadisticas', label: 'Stats', icon: TrendingUp },
+    ...(showGaleria ? [{ key: 'galeria', label: 'Galería', icon: Image }] : []),
     ...(hasSalonFama ? [{ key: 'salon', label: 'Salón', icon: Award }] : []),
     ...(showReglamento ? [{ key: 'reglamento', label: 'Reglamento', icon: BookOpen }] : []),
   ]
@@ -776,6 +854,7 @@ export default function TorneoPublico() {
         {tab === 'equipos' && <TabEquipos username={username} ligaSlug={ligaSlug} equipos={equipos} />}
         {tab === 'mvp' && <TabMVP username={username} ligaSlug={ligaSlug} />}
         {tab === 'estadisticas' && <TabEstadisticas username={username} ligaSlug={ligaSlug} />}
+        {tab === 'galeria' && showGaleria && <TabGaleria username={username} ligaSlug={ligaSlug} />}
         {tab === 'salon' && hasSalonFama && <TabSalon username={username} ligaSlug={ligaSlug} />}
         {tab === 'reglamento' && showReglamento && <TabReglamento reglamento={liga.reglamento} />}
       </div>
