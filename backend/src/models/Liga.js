@@ -26,6 +26,8 @@ const ligaSchema = new mongoose.Schema(
     },
     reglamento: { type: String, default: '' },
     galeria: [{ type: String }],
+    token_inscripcion: { type: String, default: null, sparse: true },
+    inscripciones_abiertas: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

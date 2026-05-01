@@ -11,4 +11,5 @@ module.exports = {
   WhatsappLog: require('./WhatsappLog'),
   LiguillaGrupo: require('./LiguillaGrupo'),
   LiguillaPartido: require('./LiguillaPartido'),
+  Inscripcion: require('./Inscripcion'),
 }
