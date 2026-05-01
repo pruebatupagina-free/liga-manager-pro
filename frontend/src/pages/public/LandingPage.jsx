@@ -121,7 +121,7 @@ export default function LandingPage() {
                 key={plan.nombre}
                 className="rounded-2xl flex flex-col"
                 style={{
-                  background: plan.accent ? 'linear-gradient(135deg, #0F2A1A 0%, #0F172A 100%)' : 'var(--color-primary)',
+                  background: plan.accent ? 'var(--gradient-featured)' : 'var(--color-primary)',
                   border: plan.accent ? '1px solid #22C55E' : '1px solid var(--color-border)',
                   boxShadow: plan.accent ? '0 0 30px rgba(34,197,94,0.15)' : undefined,
                   padding: '32px',
@@ -134,7 +134,7 @@ export default function LandingPage() {
                 )}
                 <h3 className="font-display text-2xl mb-1" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{plan.nombre}</h3>
                 <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-display text-4xl" style={{ color: plan.accent ? 'var(--color-accent)' : 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{plan.precio}</span>
+                  <span className="font-display text-4xl" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{plan.precio}</span>
                   <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{plan.periodo}</span>
                 </div>
                 <ul className="space-y-3 flex-1 mb-6">

@@ -15,6 +15,24 @@
   --color-warning: #F59E0B;
   --font-display: 'Bebas Neue', sans-serif;
   --font-body: 'DM Sans', sans-serif;
+  --gradient-header: radial-gradient(ellipse at 50% 0%, #0F2A1A 0%, var(--color-primary) 65%);
+  --gradient-featured: linear-gradient(135deg, #0F2A1A 0%, #0F172A 100%);
+}
+
+html.light {
+  --color-bg: #F0F4F8;
+  --color-primary: #FFFFFF;
+  --color-secondary: #E8EEF4;
+  --color-muted: #D1DCE8;
+  --color-border: #B8C8D8;
+  --color-fg: #0F172A;
+  --color-fg-muted: #475569;
+  --color-accent: #16A34A;
+  --color-accent-hover: #15803D;
+  --color-destructive: #DC2626;
+  --color-warning: #D97706;
+  --gradient-header: radial-gradient(ellipse at 50% 0%, #BBDFC8 0%, var(--color-primary) 65%);
+  --gradient-featured: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
 }
 
 @layer base {
@@ -29,6 +47,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.15s ease;
 }
 
 #root { min-height: 100svh; }

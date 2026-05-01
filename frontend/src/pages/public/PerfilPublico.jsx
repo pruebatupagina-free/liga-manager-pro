@@ -341,7 +341,7 @@ export default function PerfilPublico() {
       <div
         className="px-4 pt-10 pb-8 text-center"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #0F2A1A 0%, var(--color-primary) 65%)',
+          background: 'var(--gradient-header)',
           borderBottom: '1px solid var(--color-border)',
         }}
       >

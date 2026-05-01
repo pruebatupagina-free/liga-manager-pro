@@ -815,7 +815,7 @@ export default function TorneoPublico() {
     <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
       <div className="px-4 py-10 text-center"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, #0F2A1A 0%, var(--color-primary) 65%)', borderBottom: '1px solid var(--color-border)' }}>
+        style={{ background: 'var(--gradient-header)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
           style={{ background: 'rgba(34,197,94,0.15)' }}>
           <Trophy size={28} style={{ color: 'var(--color-accent)' }} />

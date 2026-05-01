@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import PrivateRoute from './components/layout/PrivateRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
+import ThemeToggle from './components/ui/ThemeToggle'
 
 import LandingPage from './pages/public/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -24,7 +25,9 @@ import AdminPanel from './pages/AdminPanel'
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <ThemeToggle />
+      <Routes>
       {/* Públicas */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -69,5 +72,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }
