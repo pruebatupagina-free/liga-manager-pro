@@ -2,6 +2,8 @@ const router = require('express').Router()
 const ctrl = require('../controllers/publicController')
 
 router.get('/:username', ctrl.perfil)
+router.get('/:username/hub/data', ctrl.hub)
+router.get('/:username/resultados/:fecha', ctrl.resultadosFecha)
 router.get('/:username/:ligaSlug', ctrl.liga)
 router.get('/:username/:ligaSlug/tabla', ctrl.tabla)
 router.get('/:username/:ligaSlug/estadisticas-defensivas', ctrl.estadisticasDefensivas)

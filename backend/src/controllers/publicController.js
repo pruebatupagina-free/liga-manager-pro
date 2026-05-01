@@ -14,6 +14,133 @@ exports.perfil = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+// GET /api/public/:username/hub
+exports.hub = async (req, res, next) => {
+  try {
+    const admin = await Usuario.findOne({ username: req.params.username }).select('username nombre').lean()
+    if (!admin) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+    const ligas = await Liga.find({ admin_id: admin._id })
+      .select('nombre slug estado configuracion.deporte')
+      .lean()
+
+    if (!ligas.length) return res.json({ admin, ligas: [], proximos: [], fechas_resultado: [] })
+
+    const ligaIds = ligas.map(l => l._id)
+    const ligaMap = Object.fromEntries(ligas.map(l => [l._id.toString(), { nombre: l.nombre, slug: l.slug }]))
+
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+
+    const todasJornadas = await Jornada.find({
+      liga_id: { $in: ligaIds },
+      fecha: { $ne: null },
+    }).select('_id liga_id numero fecha estado').lean()
+
+    const jornadaMap = Object.fromEntries(todasJornadas.map(j => [j._id.toString(), j]))
+
+    // Próximos: jornadas con fecha futura y no finalizadas
+    const jornadaProximaIds = todasJornadas
+      .filter(j => new Date(j.fecha) >= today && j.estado !== 'finalizada')
+      .map(j => j._id)
+
+    const proximosRaw = jornadaProximaIds.length
+      ? await Partido.find({
+          jornada_id: { $in: jornadaProximaIds },
+          estado: { $in: ['pendiente', 'reprogramado'] },
+          es_bye: { $ne: true },
+        })
+          .populate('equipo_local_id', 'nombre logo color_principal slug')
+          .populate('equipo_visitante_id', 'nombre logo color_principal slug')
+          .sort({ hora: 1 })
+          .lean()
+      : []
+
+    const proximosMap = {}
+    for (const p of proximosRaw) {
+      const j = jornadaMap[p.jornada_id?.toString()]
+      if (!j?.fecha) continue
+      const key = new Date(j.fecha).toISOString().split('T')[0]
+      if (!proximosMap[key]) proximosMap[key] = { fecha: j.fecha, partidos: [] }
+      proximosMap[key].partidos.push({ ...p, jornada_numero: j.numero, liga: ligaMap[j.liga_id?.toString()] })
+    }
+    const proximos = Object.values(proximosMap)
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+      .slice(0, 12)
+
+    // Fechas con resultados (últimas 20 jornadas finalizadas)
+    const jornadasConResultado = todasJornadas
+      .filter(j => j.estado === 'finalizada' || new Date(j.fecha) < today)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+
+    const fechasSet = []
+    const seen = new Set()
+    for (const j of jornadasConResultado) {
+      const key = new Date(j.fecha).toISOString().split('T')[0]
+      if (!seen.has(key)) { seen.add(key); fechasSet.push(key) }
+      if (fechasSet.length >= 15) break
+    }
+
+    res.json({ admin, ligas, proximos, fechas_resultado: fechasSet })
+  } catch (err) { next(err) }
+}
+
+// GET /api/public/:username/resultados/:fecha  (fecha = YYYY-MM-DD)
+exports.resultadosFecha = async (req, res, next) => {
+  try {
+    const admin = await Usuario.findOne({ username: req.params.username }).select('_id').lean()
+    if (!admin) return res.status(404).json({ error: 'Usuario no encontrado' })
+
+    const ligasRaw = await Liga.find({ admin_id: admin._id }).select('_id nombre slug').lean()
+    const ligaIds = ligasRaw.map(l => l._id)
+    const ligaMap = Object.fromEntries(ligasRaw.map(l => [l._id.toString(), { nombre: l.nombre, slug: l.slug }]))
+
+    const fecha = new Date(req.params.fecha)
+    const fechaFin = new Date(fecha)
+    fechaFin.setDate(fechaFin.getDate() + 1)
+
+    const jornadas = await Jornada.find({
+      liga_id: { $in: ligaIds },
+      fecha: { $gte: fecha, $lt: fechaFin },
+    }).lean()
+
+    if (!jornadas.length) return res.json({ partidos: [] })
+
+    const jornadaIds = jornadas.map(j => j._id)
+    const jornadaMap = Object.fromEntries(jornadas.map(j => [j._id.toString(), j]))
+
+    const partidos = await Partido.find({
+      jornada_id: { $in: jornadaIds },
+      estado: { $in: ['jugado', 'wo'] },
+      es_bye: { $ne: true },
+    })
+      .populate('equipo_local_id', 'nombre logo color_principal slug')
+      .populate('equipo_visitante_id', 'nombre logo color_principal slug')
+      .populate('mvp_jugador_id', 'nombre foto')
+      .sort({ hora: 1 })
+      .lean()
+
+    const partidoIds = partidos.map(p => p._id)
+    const goles = await Gol.find({ partido_id: { $in: partidoIds }, tipo: { $ne: 'autogol' } })
+      .populate('jugador_id', 'nombre')
+      .populate('equipo_id', '_id')
+      .lean()
+
+    const golesMap = {}
+    goles.forEach(g => {
+      const pid = g.partido_id.toString()
+      if (!golesMap[pid]) golesMap[pid] = []
+      golesMap[pid].push(g)
+    })
+
+    const result = partidos.map(p => {
+      const j = jornadaMap[p.jornada_id?.toString()]
+      return { ...p, jornada_numero: j?.numero, liga: ligaMap[j?.liga_id?.toString()], goles: golesMap[p._id.toString()] || [] }
+    })
+
+    res.json({ partidos: result })
+  } catch (err) { next(err) }
+}
+
 // GET /api/public/:username/:ligaSlug
 exports.liga = async (req, res, next) => {
   try {
