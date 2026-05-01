@@ -1,6 +1,8 @@
-const { Equipo, Liga } = require('../models')
+const { Equipo, Liga, Usuario, Partido } = require('../models')
+const bcrypt = require('bcryptjs')
 const slugify = require('../utils/slugify')
 const { upload, uploadToCloudinary, deleteFromCloudinary } = require('../utils/upload')
+const calcularPagos = require('../utils/calcularPagos')
 
 async function verificarLiga(ligaId, userId, rol) {
   const liga = await Liga.findById(ligaId).lean()
@@ -85,6 +87,73 @@ exports.update = [
     } catch (err) { next(err) }
   },
 ]
+
+// POST /api/equipos/:id/cuenta — admin crea/actualiza credenciales del dueño
+exports.crearCuenta = async (req, res, next) => {
+  try {
+    const equipo = await Equipo.findById(req.params.id)
+    if (!equipo) return res.status(404).json({ error: 'Equipo no encontrado' })
+    const liga = await verificarLiga(equipo.liga_id, req.user.id, req.user.rol)
+    if (!liga) return res.status(403).json({ error: 'Sin acceso' })
+
+    const { email, password } = req.body
+    if (!email || !password) return res.status(400).json({ error: 'email y password requeridos' })
+
+    if (equipo.dueno_id) {
+      const hash = await bcrypt.hash(password, 12)
+      await Usuario.findByIdAndUpdate(equipo.dueno_id, { email: email.toLowerCase(), password: hash })
+      return res.json({ ok: true, actualizado: true })
+    }
+
+    const existe = await Usuario.findOne({ email: email.toLowerCase() })
+    if (existe) return res.status(409).json({ error: 'Email ya en uso' })
+
+    let username = `eq_${slugify(equipo.nombre)}`
+    if (await Usuario.exists({ username })) username = `${username}_${Date.now().toString(36)}`
+
+    const hash = await bcrypt.hash(password, 12)
+    const user = await Usuario.create({
+      nombre: equipo.nombre,
+      email: email.toLowerCase(),
+      password: hash,
+      rol: 'dueno_equipo',
+      username,
+      licencia: { plan: 'basico', estado: 'activa', fecha_inicio: new Date() },
+    })
+
+    equipo.dueno_id = user._id
+    await equipo.save()
+    res.status(201).json({ ok: true, actualizado: false })
+  } catch (err) { next(err) }
+}
+
+// GET /api/equipos/mi-equipo — dueño ve su propio equipo + cobros
+exports.miEquipo = async (req, res, next) => {
+  try {
+    const equipo = await Equipo.findOne({ dueno_id: req.user.id }).lean()
+    if (!equipo) return res.status(404).json({ error: 'No tienes un equipo asignado' })
+
+    const liga = await Liga.findById(equipo.liga_id).lean()
+    const partidos = await Partido.find({ liga_id: equipo.liga_id, estado: { $ne: 'cancelado' } }).lean()
+    const cobros = liga ? calcularPagos(equipo, liga, partidos) : null
+
+    if (cobros?.arbitrajes?.detalle?.length) {
+      const rivalIds = cobros.arbitrajes.detalle.map(d => d.rival).filter(Boolean)
+      const rivales = await Equipo.find({ _id: { $in: rivalIds } }).select('nombre').lean()
+      const rivalMap = Object.fromEntries(rivales.map(e => [e._id.toString(), e.nombre]))
+      cobros.arbitrajes.detalle = cobros.arbitrajes.detalle.map(d => ({
+        ...d,
+        rival_nombre: rivalMap[d.rival?.toString()] || 'Desconocido',
+      }))
+    }
+
+    res.json({
+      equipo,
+      liga: liga ? { _id: liga._id, nombre: liga.nombre, slug: liga.slug, admin_username: liga.admin_username } : null,
+      cobros,
+    })
+  } catch (err) { next(err) }
+}
 
 // DELETE /api/equipos/:id
 exports.remove = async (req, res, next) => {

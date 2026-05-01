@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import PrivateRoute from './components/layout/PrivateRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
+import MiEquipoLayout from './components/layout/MiEquipoLayout'
 import ThemeToggle from './components/ui/ThemeToggle'
 
 import LandingPage from './pages/public/LandingPage'
@@ -22,6 +23,9 @@ import EstadisticasPage from './pages/EstadisticasPage'
 import LiguillaPage from './pages/LiguillaPage'
 import ChatbotPage from './pages/ChatbotPage'
 import AdminPanel from './pages/AdminPanel'
+import MiEquipoPage from './pages/equipo/MiEquipoPage'
+import MiJugadoresPage from './pages/equipo/MiJugadoresPage'
+import MiPagosPage from './pages/equipo/MiPagosPage'
 
 export default function App() {
   return (
@@ -68,6 +72,20 @@ export default function App() {
         }
       >
         <Route index element={<AdminPanel />} />
+      </Route>
+
+      {/* Dueño de equipo */}
+      <Route
+        path="/mi-equipo"
+        element={
+          <PrivateRoute roles={['dueno_equipo']}>
+            <MiEquipoLayout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<MiEquipoPage />} />
+        <Route path="jugadores" element={<MiJugadoresPage />} />
+        <Route path="pagos" element={<MiPagosPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

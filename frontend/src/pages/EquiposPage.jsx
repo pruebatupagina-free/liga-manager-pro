@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { Plus, Users, Edit, UserX, Upload, Phone } from 'lucide-react'
+import { Plus, Users, Edit, UserX, Upload, Phone, KeyRound } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import Badge from '../components/ui/Badge'
 import client from '../api/client'
@@ -34,6 +34,8 @@ export default function EquiposPage() {
   const qc = useQueryClient()
   const [modal, setModal] = useState(false)
   const [bajaModal, setBajaModal] = useState(null)
+  const [cuentaModal, setCuentaModal] = useState(null)
+  const [cuentaForm, setCuentaForm] = useState({ email: '', password: '' })
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(DEFAULT_FORM)
   const [bajaForm, setBajaForm] = useState({ motivo: 'Retiro voluntario', motivo_otro: '', conservar_partidos: true })
@@ -66,6 +68,17 @@ export default function EquiposPage() {
     mutationFn: ({ id, data }) => client.put(`/equipos/${id}/baja`, data),
     onSuccess: () => { qc.invalidateQueries(['equipos', liga_id]); setBajaModal(null); toast.success('Equipo dado de baja') },
     onError: err => toast.error(err.response?.data?.error || 'Error'),
+  })
+
+  const crearCuenta = useMutation({
+    mutationFn: ({ id, data }) => client.post(`/equipos/${id}/cuenta`, data),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries(['equipos', liga_id])
+      setCuentaModal(null)
+      setCuentaForm({ email: '', password: '' })
+      toast.success(vars.data.actualizado ? 'Credenciales actualizadas' : 'Cuenta creada correctamente')
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Error al crear cuenta'),
   })
 
   const cfg = liga?.configuracion
@@ -155,6 +168,15 @@ export default function EquiposPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setCuentaModal(eq); setCuentaForm({ email: '', password: '' }) }}
+                  className="p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+                  style={{ color: eq.dueno_id ? 'var(--color-accent)' : 'var(--color-fg-muted)' }}
+                  aria-label="Crear cuenta del equipo"
+                  title={eq.dueno_id ? 'Actualizar credenciales' : 'Crear cuenta'}
+                >
+                  <KeyRound size={16} />
+                </button>
                 <button
                   onClick={() => openEdit(eq)}
                   className="p-2 rounded-xl hover:bg-white/5 cursor-pointer"
@@ -368,6 +390,70 @@ export default function EquiposPage() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Cuenta modal */}
+      <Modal
+        open={!!cuentaModal}
+        onClose={() => { setCuentaModal(null); setCuentaForm({ email: '', password: '' }) }}
+        title={cuentaModal?.dueno_id ? 'ACTUALIZAR CREDENCIALES' : 'CREAR CUENTA'}
+        size="sm"
+      >
+        {cuentaModal && (
+          <form
+            onSubmit={e => {
+              e.preventDefault()
+              crearCuenta.mutate({ id: cuentaModal._id, data: cuentaForm })
+            }}
+            className="space-y-4"
+          >
+            <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+              {cuentaModal.dueno_id
+                ? `Actualiza las credenciales de acceso para ${cuentaModal.nombre}.`
+                : `Crea una cuenta para que el dueño de ${cuentaModal.nombre} pueda iniciar sesión.`}
+            </p>
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>Email *</label>
+              <input
+                type="email" required
+                value={cuentaForm.email}
+                onChange={e => setCuentaForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="equipo@correo.com"
+                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-fg-muted)' }}>Contraseña *</label>
+              <input
+                type="text" required minLength={6}
+                value={cuentaForm.password}
+                onChange={e => setCuentaForm(f => ({ ...f, password: e.target.value }))}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+              />
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => { setCuentaModal(null); setCuentaForm({ email: '', password: '' }) }}
+                className="flex-1 py-2.5 rounded-xl text-sm cursor-pointer"
+                style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={crearCuenta.isPending}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-60"
+                style={{ background: 'var(--color-accent)', color: '#020617' }}
+              >
+                {crearCuenta.isPending ? 'Guardando...' : cuentaModal.dueno_id ? 'Actualizar' : 'Crear cuenta'}
+              </button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   )
