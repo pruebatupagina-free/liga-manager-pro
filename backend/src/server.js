@@ -37,6 +37,7 @@ app.use('/api/public', require('./routes/public'))
 app.use('/api/admin', require('./routes/admin'))
 app.use('/api/arbitro', require('./routes/arbitro'))
 app.use('/api/inscripciones', require('./routes/inscripciones'))
+app.use('/api/posts', require('./routes/posts'))
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date() }))
 

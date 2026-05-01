@@ -1,4 +1,5 @@
 module.exports = {
+  Post: require('./Post'),
   Usuario: require('./Usuario'),
   Liga: require('./Liga'),
   Equipo: require('./Equipo'),

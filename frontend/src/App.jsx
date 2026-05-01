@@ -26,6 +26,7 @@ import AdminPanel from './pages/AdminPanel'
 import MiEquipoPage from './pages/equipo/MiEquipoPage'
 import MiJugadoresPage from './pages/equipo/MiJugadoresPage'
 import MiPagosPage from './pages/equipo/MiPagosPage'
+import FeedPage from './pages/FeedPage'
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="liguilla/:liga_id" element={<LiguillaPage />} />
         <Route path="inscripciones/:liga_id" element={<InscripcionesPage />} />
         <Route path="chatbot" element={<ChatbotPage />} />
+        <Route path="feed/:liga_id" element={<FeedPage />} />
       </Route>
 
       {/* Admin */}
@@ -84,6 +86,7 @@ export default function App() {
         }
       >
         <Route index element={<MiEquipoPage />} />
+        <Route path="feed" element={<FeedPage />} />
         <Route path="jugadores" element={<MiJugadoresPage />} />
         <Route path="pagos" element={<MiPagosPage />} />
       </Route>

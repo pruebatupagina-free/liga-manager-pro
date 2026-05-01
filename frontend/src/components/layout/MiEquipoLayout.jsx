@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Trophy, Users, CreditCard, LogOut, Menu, X, Shield } from 'lucide-react'
+import { Trophy, Users, CreditCard, LogOut, Menu, X, Shield, Newspaper } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../hooks/useAuth'
 import client from '../../api/client'
@@ -8,6 +8,7 @@ import ThemeToggle from '../ui/ThemeToggle'
 
 const NAV = [
   { to: '/mi-equipo', label: 'Mi Equipo', icon: Trophy, end: true },
+  { to: '/mi-equipo/feed', label: 'Feed', icon: Newspaper },
   { to: '/mi-equipo/jugadores', label: 'Jugadores', icon: Users },
   { to: '/mi-equipo/pagos', label: 'Pagos', icon: CreditCard },
 ]
