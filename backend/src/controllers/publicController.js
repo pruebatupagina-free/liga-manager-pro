@@ -345,6 +345,51 @@ exports.salonFama = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+// GET /api/public/:username/:ligaSlug/estadisticas
+exports.estadisticas = async (req, res, next) => {
+  try {
+    const liga = await loadLigaPublic(req)
+    if (!liga) return res.status(404).json({ error: 'No encontrado' })
+
+    const [equipos, partidos] = await Promise.all([
+      Equipo.find({ liga_id: liga._id, 'baja.activa': { $ne: true } })
+        .select('_id nombre logo color_principal')
+        .lean(),
+      Partido.find({ liga_id: liga._id, estado: { $in: ['jugado', 'wo'] }, es_bye: { $ne: true } })
+        .select('equipo_local_id equipo_visitante_id goles_local goles_visitante estado')
+        .lean(),
+    ])
+
+    const result = equipos.map(e => {
+      const eid = e._id.toString()
+      const propios = partidos.filter(p =>
+        p.equipo_local_id?.toString() === eid || p.equipo_visitante_id?.toString() === eid
+      )
+
+      let GF = 0, GC = 0, PJ = 0, clean_sheets = 0
+      propios.forEach(p => {
+        PJ++
+        if (p.estado === 'wo') return
+        const esLocal = p.equipo_local_id?.toString() === eid
+        const gf = esLocal ? (p.goles_local ?? 0) : (p.goles_visitante ?? 0)
+        const gc = esLocal ? (p.goles_visitante ?? 0) : (p.goles_local ?? 0)
+        GF += gf
+        GC += gc
+        if (gc === 0) clean_sheets++
+      })
+
+      return {
+        equipo: { _id: e._id, nombre: e.nombre, logo: e.logo, color_principal: e.color_principal },
+        GF, GC, PJ,
+        clean_sheets,
+        promedio: PJ > 0 ? +(GF / PJ).toFixed(2) : 0,
+      }
+    })
+
+    res.json(result)
+  } catch (err) { next(err) }
+}
+
 // GET /api/public/:username/:ligaSlug/reglamento
 exports.reglamento = async (req, res, next) => {
   try {

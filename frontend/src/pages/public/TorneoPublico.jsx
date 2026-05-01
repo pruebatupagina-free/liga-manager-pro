@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Trophy, Calendar, BarChart2, Users, Star, Home, BookOpen, Award, Target,
+  Trophy, Calendar, BarChart2, Users, Star, Home, BookOpen, Award, Target, TrendingUp,
 } from 'lucide-react'
 import client from '../../api/client'
 import useDocumentMeta from '../../hooks/useDocumentMeta'
@@ -523,6 +523,167 @@ function TabSalon({ username, ligaSlug }) {
   )
 }
 
+// ─── Tab: ESTADÍSTICAS ────────────────────────────────────────────────────────
+
+function StatBar({ value, max, color }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0
+  return (
+    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+    </div>
+  )
+}
+
+function TabEstadisticas({ username, ligaSlug }) {
+  const [sub, setSub] = useState('ofensiva')
+
+  const { data: stats = [], isLoading } = useQuery({
+    queryKey: ['pub-estadisticas', username, ligaSlug],
+    queryFn: () => client.get(`/public/${username}/${ligaSlug}/estadisticas`).then(r => r.data),
+  })
+
+  const { data: tarjetas = [] } = useQuery({
+    queryKey: ['pub-tarjetas', username, ligaSlug],
+    queryFn: () => client.get(`/public/${username}/${ligaSlug}/tarjetas`).then(r => r.data),
+    enabled: sub === 'disciplina',
+  })
+
+  if (isLoading) return <LoadingState />
+
+  const SUB_TABS = [
+    { key: 'ofensiva', label: 'Ofensiva' },
+    { key: 'defensiva', label: 'Defensiva' },
+    { key: 'disciplina', label: 'Disciplina' },
+  ]
+
+  const ofensiva = [...stats].sort((a, b) => b.GF - a.GF || b.promedio - a.promedio)
+  const defensiva = [...stats].filter(s => s.PJ > 0).sort((a, b) => a.GC - b.GC || b.clean_sheets - a.clean_sheets)
+
+  const maxGF = ofensiva[0]?.GF || 1
+  const maxGC = Math.max(...defensiva.map(s => s.GC), 1)
+
+  return (
+    <div>
+      {/* Sub-tab pills */}
+      <div className="flex gap-2 mb-5">
+        {SUB_TABS.map(({ key, label }) => (
+          <button key={key} onClick={() => setSub(key)}
+            className="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all"
+            style={{
+              background: sub === key ? 'var(--color-accent)' : 'var(--color-primary)',
+              color: sub === key ? '#020617' : 'var(--color-fg-muted)',
+              border: '1px solid var(--color-border)',
+            }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Ofensiva */}
+      {sub === 'ofensiva' && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider mb-3 px-1" style={{ color: 'var(--color-fg-muted)' }}>
+            Ranking por Goles a Favor
+          </p>
+          {ofensiva.length === 0 && <EmptyState icon={Target} text="Sin partidos jugados aún" />}
+          {ofensiva.map((s, i) => (
+            <div key={s.equipo._id} className="flex items-center gap-3 rounded-xl px-4 py-3"
+              style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)', borderLeft: `3px solid ${s.equipo.color_principal || '#22C55E'}` }}>
+              <span className="w-5 text-center font-display text-sm flex-shrink-0"
+                style={{ color: i < 3 ? 'var(--color-accent)' : 'var(--color-fg-muted)', fontFamily: 'var(--font-display)' }}>{i + 1}</span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 overflow-hidden"
+                style={{ background: (s.equipo.color_principal || '#22C55E') + '33', color: s.equipo.color_principal || '#22C55E' }}>
+                {s.equipo.logo ? <img src={s.equipo.logo} alt="" className="w-full h-full object-cover" /> : s.equipo.nombre?.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-fg)' }}>{s.equipo.nombre}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <StatBar value={s.GF} max={maxGF} color={s.equipo.color_principal || '#22C55E'} />
+                  <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-fg-muted)' }}>{s.promedio}/jornada</span>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className="font-display text-2xl" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{s.GF}</span>
+                <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>goles</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Defensiva */}
+      {sub === 'defensiva' && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider mb-3 px-1" style={{ color: 'var(--color-fg-muted)' }}>
+            Ranking Defensivo — Menos Goles en Contra
+          </p>
+          {defensiva.length === 0 && <EmptyState icon={Target} text="Sin partidos jugados aún" />}
+          {defensiva.map((s, i) => (
+            <div key={s.equipo._id} className="flex items-center gap-3 rounded-xl px-4 py-3"
+              style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)', borderLeft: `3px solid ${s.equipo.color_principal || '#22C55E'}` }}>
+              <span className="w-5 text-center font-display text-sm flex-shrink-0"
+                style={{ color: i < 3 ? 'var(--color-accent)' : 'var(--color-fg-muted)', fontFamily: 'var(--font-display)' }}>{i + 1}</span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 overflow-hidden"
+                style={{ background: (s.equipo.color_principal || '#22C55E') + '33', color: s.equipo.color_principal || '#22C55E' }}>
+                {s.equipo.logo ? <img src={s.equipo.logo} alt="" className="w-full h-full object-cover" /> : s.equipo.nombre?.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-fg)' }}>{s.equipo.nombre}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <StatBar value={maxGC - s.GC} max={maxGC} color={s.equipo.color_principal || '#22C55E'} />
+                  <span className="text-xs flex-shrink-0" style={{ color: '#22C55E' }}>{s.clean_sheets} valla{s.clean_sheets !== 1 ? 's' : ''} invicta{s.clean_sheets !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className="font-display text-2xl" style={{ color: s.GC === 0 ? '#22C55E' : s.GC <= 2 ? 'var(--color-fg)' : '#EF4444', fontFamily: 'var(--font-display)' }}>{s.GC}</span>
+                <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>en contra</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Disciplina */}
+      {sub === 'disciplina' && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider mb-3 px-1" style={{ color: 'var(--color-fg-muted)' }}>
+            Ranking de Tarjetas
+          </p>
+          {tarjetas.length === 0 && <EmptyState icon={Target} text="Sin tarjetas registradas" />}
+          {tarjetas.slice(0, 30).map((j, i) => (
+            <div key={j.jugador?._id} className="flex items-center gap-3 rounded-xl px-4 py-3"
+              style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)', borderLeft: `3px solid ${j.equipo?.color_principal || '#22C55E'}` }}>
+              <span className="w-5 text-center font-display text-sm flex-shrink-0"
+                style={{ color: 'var(--color-fg-muted)', fontFamily: 'var(--font-display)' }}>{i + 1}</span>
+              <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: 'var(--color-secondary)' }}>
+                {j.jugador?.foto ? <img src={j.jugador.foto} alt="" className="w-full h-full object-cover" /> : <span className="text-xs font-bold" style={{ color: 'var(--color-fg)' }}>{j.jugador?.nombre?.charAt(0)}</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--color-fg)' }}>{j.jugador?.nombre}</p>
+                <p className="text-xs truncate" style={{ color: 'var(--color-fg-muted)' }}>{j.equipo?.nombre}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {j.amarillas > 0 && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-5 rounded-sm flex-shrink-0" style={{ background: '#F59E0B' }} />
+                    <span className="text-sm font-bold" style={{ color: '#F59E0B' }}>{j.amarillas}</span>
+                  </div>
+                )}
+                {j.rojas > 0 && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-5 rounded-sm flex-shrink-0" style={{ background: '#EF4444' }} />
+                    <span className="text-sm font-bold" style={{ color: '#EF4444' }}>{j.rojas}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Tab: REGLAMENTO ──────────────────────────────────────────────────────────
 
 function TabReglamento({ reglamento }) {
@@ -567,6 +728,7 @@ export default function TorneoPublico() {
     { key: 'goleadores', label: 'Goleadores', icon: Target },
     { key: 'equipos', label: 'Equipos', icon: Users },
     { key: 'mvp', label: 'MVP', icon: Star },
+    { key: 'estadisticas', label: 'Stats', icon: TrendingUp },
     ...(hasSalonFama ? [{ key: 'salon', label: 'Salón', icon: Award }] : []),
     ...(showReglamento ? [{ key: 'reglamento', label: 'Reglamento', icon: BookOpen }] : []),
   ]
@@ -613,6 +775,7 @@ export default function TorneoPublico() {
         {tab === 'goleadores' && <TabGoleadores username={username} ligaSlug={ligaSlug} />}
         {tab === 'equipos' && <TabEquipos username={username} ligaSlug={ligaSlug} equipos={equipos} />}
         {tab === 'mvp' && <TabMVP username={username} ligaSlug={ligaSlug} />}
+        {tab === 'estadisticas' && <TabEstadisticas username={username} ligaSlug={ligaSlug} />}
         {tab === 'salon' && hasSalonFama && <TabSalon username={username} ligaSlug={ligaSlug} />}
         {tab === 'reglamento' && showReglamento && <TabReglamento reglamento={liga.reglamento} />}
       </div>
