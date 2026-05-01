@@ -8,6 +8,8 @@ import PerfilPublico from './pages/public/PerfilPublico'
 import TorneoPublico from './pages/public/TorneoPublico'
 import EquipoPublico from './pages/public/EquipoPublico'
 import ArbitroPage from './pages/public/ArbitroPage'
+import InscripcionPage from './pages/public/InscripcionPage'
+import InscripcionesPage from './pages/InscripcionesPage'
 
 import DashboardPage from './pages/DashboardPage'
 import LigasPage from './pages/LigasPage'
@@ -30,6 +32,7 @@ export default function App() {
       <Route path="/:username/:ligaSlug" element={<TorneoPublico />} />
       <Route path="/:username/:ligaSlug/equipo/:equipoSlug" element={<EquipoPublico />} />
       <Route path="/arbitro/:token" element={<ArbitroPage />} />
+      <Route path="/inscripcion/:token" element={<InscripcionPage />} />
 
       {/* Privadas */}
       <Route
@@ -48,6 +51,7 @@ export default function App() {
         <Route path="cobros/:liga_id" element={<CobrosPage />} />
         <Route path="estadisticas/:liga_id" element={<EstadisticasPage />} />
         <Route path="liguilla/:liga_id" element={<LiguillaPage />} />
+        <Route path="inscripciones/:liga_id" element={<InscripcionesPage />} />
         <Route path="chatbot" element={<ChatbotPage />} />
       </Route>
 
