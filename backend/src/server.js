@@ -35,6 +35,7 @@ app.use('/api/chatbot', require('./routes/chatbot'))
 app.use('/api/liguilla', require('./routes/liguilla'))
 app.use('/api/public', require('./routes/public'))
 app.use('/api/admin', require('./routes/admin'))
+app.use('/api/arbitro', require('./routes/arbitro'))
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date() }))
 
