@@ -1,21 +1,19 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, Calendar, ChevronDown, ChevronRight, Star } from 'lucide-react'
+import { Trophy, Calendar } from 'lucide-react'
 import client from '../../api/client'
 import useDocumentMeta from '../../hooks/useDocumentMeta'
 
 const DIAS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-const MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+const MESES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+const MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-function formatFecha(dateStr) {
+// "abril 29 del 2026 (miércoles)"
+function formatFechaLarga(dateStr) {
   const d = new Date(dateStr + 'T12:00:00')
-  return `${DIAS_ES[d.getDay()]} ${d.getDate()} de ${MESES_ES[d.getMonth()]} ${d.getFullYear()}`
-}
-
-function formatFechaCorta(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00')
-  return `${DIAS_ES[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`
+  const dia = DIAS_ES[d.getDay()].toLowerCase()
+  return `${MESES_ES[d.getMonth()]} ${d.getDate()} del ${d.getFullYear()} (${dia})`
 }
 
 function EquipoAvatar({ equipo, size = 8 }) {
@@ -26,44 +24,39 @@ function EquipoAvatar({ equipo, size = 8 }) {
       style={{ background: color + '33', color }}
     >
       {equipo?.logo
-        ? <img src={equipo.logo} alt="" className="w-full h-full object-cover" />
+        ? <img src={equipo.logo} alt="" className="w-full h-full object-cover rounded-lg" />
         : equipo?.nombre?.charAt(0)
       }
     </div>
   )
 }
 
-// ─── Partido pendiente (próximos) ─────────────────────────────────────────────
-
-function CardProximo({ p }) {
+// ─── Fila de partido próximo (estilo referencia) ───────────────────────────────
+function RowProximo({ p }) {
   return (
-    <div
-      className="rounded-xl px-4 py-3"
-      style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)' }}
-    >
-      <div className="flex items-center gap-2 mb-2">
-        {p.liga && (
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--color-accent)22', color: 'var(--color-accent)' }}>
-            {p.liga.nombre}
-          </span>
-        )}
-        <span className="text-xs ml-auto font-mono" style={{ color: 'var(--color-fg-muted)' }}>
-          {p.hora || '—'} · Cancha {p.cancha}
-        </span>
-      </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+    <div className="py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <p className="text-xs font-semibold mb-0.5 uppercase tracking-wide truncate" style={{ color: 'var(--color-accent)' }}>
+        {p.liga?.nombre}
+      </p>
+      <p className="text-xs mb-2" style={{ color: 'var(--color-fg-muted)' }}>
+        Jornada {p.jornada_numero}{p.cancha ? ` · Cancha ${p.cancha}` : ''}
+      </p>
+      <div className="grid items-center gap-2" style={{ gridTemplateColumns: '1fr 80px 1fr' }}>
         <div className="flex items-center gap-2 justify-end min-w-0">
-          <span className="text-sm font-medium truncate text-right" style={{ color: 'var(--color-fg)' }}>
+          <span className="text-sm font-bold truncate text-right" style={{ color: 'var(--color-fg)' }}>
             {p.equipo_local_id?.nombre}
           </span>
-          <EquipoAvatar equipo={p.equipo_local_id} />
+          <EquipoAvatar equipo={p.equipo_local_id} size={7} />
         </div>
-        <div className="px-3 py-1 rounded-lg text-center" style={{ background: 'var(--color-primary)', minWidth: 48 }}>
-          <span className="text-xs font-bold" style={{ color: 'var(--color-fg-muted)' }}>VS</span>
+        <div className="text-center">
+          <p className="text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
+            {p.hora ? `${p.hora}hs` : '—'}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>Normal</p>
         </div>
         <div className="flex items-center gap-2 min-w-0">
-          <EquipoAvatar equipo={p.equipo_visitante_id} />
-          <span className="text-sm font-medium truncate" style={{ color: 'var(--color-fg)' }}>
+          <EquipoAvatar equipo={p.equipo_visitante_id} size={7} />
+          <span className="text-sm font-bold truncate" style={{ color: 'var(--color-fg)' }}>
             {p.equipo_visitante_id?.nombre}
           </span>
         </div>
@@ -72,182 +65,167 @@ function CardProximo({ p }) {
   )
 }
 
-// ─── Partido jugado (resultados) ─────────────────────────────────────────────
-
-function CardResultado({ p }) {
-  const [expanded, setExpanded] = useState(false)
-  const tieneDetalle = p.goles?.length > 0 || p.mvp_jugador_id
-
-  const localGoles = p.goles?.filter(g => g.equipo_id?._id?.toString() === p.equipo_local_id?._id?.toString())
-  const visitanteGoles = p.goles?.filter(g => g.equipo_id?._id?.toString() === p.equipo_visitante_id?._id?.toString())
-
+// ─── Fila de resultado (estilo referencia con scores grandes) ──────────────────
+function RowResultado({ p }) {
   const ganadorLocal = (p.goles_local ?? 0) > (p.goles_visitante ?? 0)
   const ganadorVisitante = (p.goles_visitante ?? 0) > (p.goles_local ?? 0)
 
   return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)' }}
-    >
-      <button
-        onClick={() => tieneDetalle && setExpanded(v => !v)}
-        className={`w-full px-4 py-3 text-left ${tieneDetalle ? 'cursor-pointer hover:bg-white/5 transition-all' : ''}`}
-      >
-        <div className="flex items-center gap-2 mb-2">
-          {p.liga && (
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--color-accent)22', color: 'var(--color-accent)' }}>
-              {p.liga.nombre}
-            </span>
-          )}
-          {p.hora && (
-            <span className="text-xs font-mono ml-auto" style={{ color: 'var(--color-fg-muted)' }}>
-              {p.hora} · C{p.cancha}
-            </span>
-          )}
-          {tieneDetalle && (
-            <span style={{ color: 'var(--color-fg-muted)', marginLeft: p.hora ? 0 : 'auto' }}>
-              {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <div className="flex items-center gap-2 justify-end min-w-0">
+    <div className="py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-accent)' }}>
+          {p.liga?.nombre}
+        </p>
+        <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>· Jornada {p.jornada_numero}</span>
+        {p.hora && (
+          <span className="text-xs font-mono ml-auto" style={{ color: 'var(--color-fg-muted)' }}>{p.hora}hs</span>
+        )}
+      </div>
+      <div className="grid items-center gap-2" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        {/* Local */}
+        <div className="flex items-center gap-2 justify-end min-w-0">
+          <div className="text-right min-w-0">
             <span
-              className="text-sm truncate text-right"
-              style={{ color: 'var(--color-fg)', fontWeight: ganadorLocal ? 700 : 400 }}
+              className="text-3xl font-black block leading-none"
+              style={{ color: ganadorLocal ? 'var(--color-accent)' : 'var(--color-fg)' }}
             >
-              {p.equipo_local_id?.nombre}
-            </span>
-            <EquipoAvatar equipo={p.equipo_local_id} />
-          </div>
-
-          <div
-            className="px-3 py-1.5 rounded-xl text-center font-display"
-            style={{ background: 'var(--color-primary)', minWidth: 64, fontFamily: 'var(--font-display)' }}
-          >
-            <span style={{ color: ganadorLocal ? 'var(--color-accent)' : 'var(--color-fg)', fontSize: 20 }}>
               {p.goles_local ?? 0}
             </span>
-            <span style={{ color: 'var(--color-fg-muted)', fontSize: 16, margin: '0 4px' }}>–</span>
-            <span style={{ color: ganadorVisitante ? 'var(--color-accent)' : 'var(--color-fg)', fontSize: 20 }}>
-              {p.goles_visitante ?? 0}
+            <span className="text-xs font-semibold truncate block mt-0.5" style={{ color: 'var(--color-fg)' }}>
+              {p.equipo_local_id?.nombre}
             </span>
           </div>
-
-          <div className="flex items-center gap-2 min-w-0">
-            <EquipoAvatar equipo={p.equipo_visitante_id} />
+          <EquipoAvatar equipo={p.equipo_local_id} size={9} />
+        </div>
+        {/* Center */}
+        <div className="text-center px-1">
+          {p.estado === 'wo'
+            ? <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: '#F59E0B22', color: '#F59E0B' }}>WO</span>
+            : <span className="text-sm font-bold" style={{ color: 'var(--color-fg-muted)' }}>–</span>
+          }
+        </div>
+        {/* Visitante */}
+        <div className="flex items-center gap-2 min-w-0">
+          <EquipoAvatar equipo={p.equipo_visitante_id} size={9} />
+          <div className="min-w-0">
             <span
-              className="text-sm truncate"
-              style={{ color: 'var(--color-fg)', fontWeight: ganadorVisitante ? 700 : 400 }}
+              className="text-3xl font-black block leading-none"
+              style={{ color: ganadorVisitante ? 'var(--color-accent)' : 'var(--color-fg)' }}
             >
+              {p.goles_visitante ?? 0}
+            </span>
+            <span className="text-xs font-semibold truncate block mt-0.5" style={{ color: 'var(--color-fg)' }}>
               {p.equipo_visitante_id?.nombre}
             </span>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
 
-        {p.estado === 'wo' && (
-          <p className="text-xs text-center mt-1" style={{ color: '#F59E0B' }}>WO</p>
-        )}
-      </button>
-
-      {expanded && tieneDetalle && (
-        <div className="px-4 pb-3 pt-1 border-t space-y-2" style={{ borderColor: 'var(--color-border)' }}>
-          {/* Goles por equipo */}
-          {p.goles?.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                {localGoles?.map((g, i) => (
-                  <p key={i} className="text-xs py-0.5" style={{ color: 'var(--color-fg-muted)' }}>
-                    ⚽ {g.jugador_id?.nombre}{g.minuto != null ? ` ${g.minuto}'` : ''}{g.tipo === 'penal' ? ' (P)' : ''}
-                  </p>
-                ))}
-              </div>
-              <div className="text-right">
-                {visitanteGoles?.map((g, i) => (
-                  <p key={i} className="text-xs py-0.5" style={{ color: 'var(--color-fg-muted)' }}>
-                    {g.jugador_id?.nombre}{g.minuto != null ? ` ${g.minuto}'` : ''}{g.tipo === 'penal' ? ' (P)' : ''} ⚽
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-          {p.mvp_jugador_id && (
-            <div className="flex items-center gap-1.5 pt-1">
-              <Star size={11} style={{ color: 'var(--color-accent)', fill: 'var(--color-accent)' }} />
-              <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>MVP:</span>
-              <span className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>{p.mvp_jugador_id?.nombre}</span>
-            </div>
-          )}
-        </div>
-      )}
+// ─── Encabezado de sección (barra oscura como en el sitio referencia) ──────────
+function SectionHeader({ children }) {
+  return (
+    <div className="px-4 py-3" style={{ background: 'var(--color-secondary)', borderBottom: '1px solid var(--color-border)' }}>
+      <h2 className="text-sm font-bold" style={{ color: 'var(--color-fg)' }}>{children}</h2>
     </div>
   )
 }
 
 // ─── Sección Próximos Partidos ────────────────────────────────────────────────
-
-function SeccionProximos({ proximos, username }) {
-  const [openFecha, setOpenFecha] = useState(proximos[0]?.fecha ? new Date(proximos[0].fecha).toISOString().split('T')[0] : null)
-
-  if (!proximos.length) {
-    return (
-      <div className="rounded-2xl py-12 text-center" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
-        <Calendar size={32} className="mx-auto mb-3" style={{ color: 'var(--color-fg-muted)', opacity: 0.4 }} />
-        <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>No hay partidos próximos programados</p>
-      </div>
-    )
-  }
+function SeccionProximos({ proximos }) {
+  const fechaMap = {}
+  proximos.forEach(g => {
+    const key = new Date(g.fecha).toISOString().split('T')[0]
+    fechaMap[key] = g
+  })
+  const fechas = Object.keys(fechaMap).sort()
+  const [selected, setSelected] = useState(fechas[0] || null)
 
   return (
-    <div className="space-y-2">
-      {proximos.map(grupo => {
-        const key = new Date(grupo.fecha).toISOString().split('T')[0]
-        const isOpen = openFecha === key
-        return (
-          <div key={key} className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
-            <button
-              onClick={() => setOpenFecha(isOpen ? null : key)}
-              className="w-full flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/5 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'var(--color-accent)22' }}>
-                  <Calendar size={18} style={{ color: 'var(--color-accent)' }} />
-                </div>
-                <div className="text-left">
-                  <p className="font-display text-lg leading-none" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
-                    {formatFecha(key).toUpperCase()}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
-                    {grupo.partidos.length} partido{grupo.partidos.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ background: 'var(--color-accent)22', color: 'var(--color-accent)' }}>
-                  {grupo.partidos.length}
-                </span>
-                {isOpen ? <ChevronDown size={16} style={{ color: 'var(--color-fg-muted)' }} /> : <ChevronRight size={16} style={{ color: 'var(--color-fg-muted)' }} />}
-              </div>
-            </button>
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
+      <SectionHeader>Próximos partidos</SectionHeader>
 
-            {isOpen && (
-              <div className="px-4 pb-4 space-y-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                <div className="pt-3 space-y-2">
-                  {grupo.partidos.map(p => <CardProximo key={p._id} p={p} />)}
-                </div>
-              </div>
-            )}
+      {!fechas.length ? (
+        <div className="py-12 text-center px-4">
+          <Calendar size={32} className="mx-auto mb-3" style={{ color: 'var(--color-fg-muted)', opacity: 0.4 }} />
+          <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>No hay partidos próximos programados</p>
+        </div>
+      ) : (
+        <>
+          {/* Calendar strip */}
+          <div style={{ borderBottom: '1px solid var(--color-border)', overflowX: 'auto' }}>
+            <div className="flex gap-1 p-3" style={{ minWidth: 'max-content' }}>
+              {fechas.map(f => {
+                const d = new Date(f + 'T12:00:00')
+                const count = fechaMap[f]?.partidos?.length ?? 0
+                const isSel = selected === f
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setSelected(f)}
+                    className="flex flex-col items-center px-3 py-2 rounded-xl transition-all cursor-pointer flex-shrink-0"
+                    style={{
+                      background: isSel ? 'var(--color-accent)' : 'var(--color-secondary)',
+                      color: isSel ? '#020617' : 'var(--color-fg-muted)',
+                      minWidth: 54,
+                    }}
+                  >
+                    <span className="text-xs font-medium">{DIAS_ES[d.getDay()]}</span>
+                    <span className="text-xl font-black leading-tight">{d.getDate()}</span>
+                    <span className="text-xs">{MESES_CORTO[d.getMonth()]}</span>
+                    <span
+                      className="text-xs font-bold mt-1 rounded-full px-1.5"
+                      style={{
+                        background: count > 0
+                          ? isSel ? '#02061733' : 'var(--color-accent)22'
+                          : 'transparent',
+                        color: isSel ? '#020617' : count > 0 ? 'var(--color-accent)' : 'var(--color-fg-muted)',
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        )
-      })}
+
+          {/* Selected date header */}
+          {selected && (() => {
+            const d = new Date(selected + 'T12:00:00')
+            const grupo = fechaMap[selected]
+            return (
+              <>
+                <div className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <div className="rounded-lg px-2 py-1 text-center flex-shrink-0" style={{ background: '#EF444422', border: '1px solid #EF444444' }}>
+                    <p className="text-xs font-bold" style={{ color: '#EF4444' }}>{MESES_CORTO[d.getMonth()].toUpperCase()}</p>
+                    <p className="text-2xl font-black leading-none" style={{ color: '#EF4444' }}>{d.getDate()}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm capitalize" style={{ color: 'var(--color-fg)' }}>
+                      {DIAS_ES[d.getDay()].toLowerCase()} {d.getDate()} de {MESES_ES[d.getMonth()]}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+                      {grupo.partidos.length} partido{grupo.partidos.length !== 1 ? 's' : ''} programado{grupo.partidos.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4">
+                  {grupo.partidos.map(p => <RowProximo key={p._id} p={p} />)}
+                  <div className="h-2" />
+                </div>
+              </>
+            )
+          })()}
+        </>
+      )}
     </div>
   )
 }
 
-// ─── Sección Resultados ───────────────────────────────────────────────────────
-
+// ─── Sección Resultados Recientes ─────────────────────────────────────────────
 function SeccionResultados({ fechas, username }) {
   const [fechaActiva, setFechaActiva] = useState(fechas[0] || null)
 
@@ -257,56 +235,77 @@ function SeccionResultados({ fechas, username }) {
     enabled: !!fechaActiva,
   })
 
-  if (!fechas.length) {
-    return (
-      <div className="rounded-2xl py-12 text-center" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
-        <Trophy size={32} className="mx-auto mb-3" style={{ color: 'var(--color-fg-muted)', opacity: 0.4 }} />
-        <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>Aún no hay resultados registrados</p>
-      </div>
-    )
-  }
+  // Agrupar fechas por mes para mostrar encabezado de mes
+  const mesPrimero = fechas[0] ? MESES_ES[new Date(fechas[0] + 'T12:00:00').getMonth()] : ''
 
   return (
-    <div>
-      {/* Date pills */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4 scrollbar-hide">
-        {fechas.map(f => (
-          <button
-            key={f}
-            onClick={() => setFechaActiva(f)}
-            className="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap flex-shrink-0 cursor-pointer transition-all"
-            style={{
-              background: fechaActiva === f ? 'var(--color-accent)' : 'var(--color-primary)',
-              color: fechaActiva === f ? '#020617' : 'var(--color-fg-muted)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            {formatFechaCorta(f)}
-          </button>
-        ))}
-      </div>
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
+      <SectionHeader>Resultados recientes</SectionHeader>
 
-      {/* Results for selected date */}
-      {isLoading ? (
-        <div className="py-10 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Cargando...</div>
-      ) : !data?.partidos?.length ? (
-        <div className="rounded-2xl py-10 text-center" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
-          <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>Sin resultados para esta fecha</p>
+      {!fechas.length ? (
+        <div className="py-12 text-center px-4">
+          <Trophy size={32} className="mx-auto mb-3" style={{ color: 'var(--color-fg-muted)', opacity: 0.4 }} />
+          <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>Aún no hay resultados registrados</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {data.partidos.map(p => <CardResultado key={p._id} p={p} />)}
-        </div>
+        <>
+          {/* Month + date pills */}
+          <div className="px-4 pt-3 pb-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <p className="text-xs font-semibold text-center mb-2 capitalize" style={{ color: 'var(--color-fg-muted)' }}>
+              {mesPrimero.charAt(0).toUpperCase() + mesPrimero.slice(1)}
+            </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {fechas.map(f => {
+                const d = new Date(f + 'T12:00:00')
+                const isActive = fechaActiva === f
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setFechaActiva(f)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 cursor-pointer transition-all"
+                    style={{
+                      background: isActive ? 'var(--color-accent)22' : 'var(--color-secondary)',
+                      color: isActive ? 'var(--color-accent)' : 'var(--color-fg-muted)',
+                      border: `1px solid ${isActive ? 'var(--color-accent)44' : 'var(--color-border)'}`,
+                      fontWeight: isActive ? 700 : 400,
+                    }}
+                  >
+                    {DIAS_ES[d.getDay()]} - {d.getDate()}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Selected date label */}
+          {fechaActiva && (
+            <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-border)' }}>
+              <p className="text-sm font-medium capitalize" style={{ color: 'var(--color-accent)' }}>
+                {formatFechaLarga(fechaActiva)}
+              </p>
+            </div>
+          )}
+
+          {/* Match list */}
+          <div className="px-4">
+            {isLoading ? (
+              <div className="py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Cargando...</div>
+            ) : !data?.partidos?.length ? (
+              <div className="py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Sin resultados para esta fecha</div>
+            ) : (
+              data.partidos.map(p => <RowResultado key={p._id} p={p} />)
+            )}
+            <div className="h-2" />
+          </div>
+        </>
       )}
     </div>
   )
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-
 export default function PerfilPublico() {
   const { username } = useParams()
-  const [activeTab, setActiveTab] = useState('proximos')
 
   const { data, isLoading } = useQuery({
     queryKey: ['hub', username],
@@ -315,7 +314,9 @@ export default function PerfilPublico() {
 
   useDocumentMeta({
     title: data?.admin ? `${data.admin.nombre || data.admin.username} — LigaManager Pro` : 'Perfil',
-    description: data?.admin ? `Próximos partidos y resultados de ${data.admin.nombre || data.admin.username}` : undefined,
+    description: data?.admin
+      ? `Próximos partidos y resultados de ${data.admin.nombre || data.admin.username}`
+      : undefined,
   })
 
   if (isLoading) return (
@@ -333,23 +334,26 @@ export default function PerfilPublico() {
   const { admin, ligas, proximos, fechas_resultado } = data
   const ligasActivas = ligas.filter(l => l.estado === 'activa')
 
-  const TABS = [
-    { key: 'proximos', label: 'Próximos partidos' },
-    { key: 'resultados', label: 'Resultados' },
-  ]
-
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
+
       {/* Header */}
-      <div className="px-4 pt-10 pb-8 text-center"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, #0F2A1A 0%, var(--color-primary) 65%)', borderBottom: '1px solid var(--color-border)' }}>
-        <div className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-          style={{ background: 'var(--color-accent)22', border: '2px solid var(--color-accent)44' }}>
-          <span className="font-display text-4xl" style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-display)' }}>
+      <div
+        className="px-4 pt-10 pb-8 text-center"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 0%, #0F2A1A 0%, var(--color-primary) 65%)',
+          borderBottom: '1px solid var(--color-border)',
+        }}
+      >
+        <div
+          className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+          style={{ background: 'var(--color-accent)22', border: '2px solid var(--color-accent)44' }}
+        >
+          <span className="text-4xl font-black" style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-display)' }}>
             {(admin.nombre || admin.username).charAt(0).toUpperCase()}
           </span>
         </div>
-        <h1 className="font-display text-4xl sm:text-5xl mb-1" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-4xl sm:text-5xl mb-1 font-black tracking-wide" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
           {(admin.nombre || admin.username).toUpperCase()}
         </h1>
         <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
@@ -363,7 +367,7 @@ export default function PerfilPublico() {
               <Link
                 key={liga._id}
                 to={`/${username}/${liga.slug}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer hover:scale-105"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-105"
                 style={{
                   background: liga.estado === 'activa' ? 'var(--color-accent)22' : 'var(--color-secondary)',
                   color: liga.estado === 'activa' ? 'var(--color-accent)' : 'var(--color-fg-muted)',
@@ -378,35 +382,20 @@ export default function PerfilPublico() {
         )}
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-6 rounded-2xl p-1" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
-          {TABS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all"
-              style={{
-                background: activeTab === key ? 'var(--color-accent)' : 'transparent',
-                color: activeTab === key ? '#020617' : 'var(--color-fg-muted)',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'proximos' && (
-          <SeccionProximos proximos={proximos} username={username} />
-        )}
-
-        {activeTab === 'resultados' && (
-          <SeccionResultados fechas={fechas_resultado} username={username} />
-        )}
+      {/* Content — ambas secciones apiladas como en el sitio de referencia */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        <SeccionProximos proximos={proximos} />
+        <SeccionResultados fechas={fechas_resultado} username={username} />
       </div>
 
-      <footer className="text-center py-8 text-xs mt-4" style={{ color: 'var(--color-fg-muted)', borderTop: '1px solid var(--color-border)' }}>
-        Powered by <Link to="/" className="font-semibold cursor-pointer" style={{ color: 'var(--color-accent)' }}>LigaManager Pro</Link>
+      <footer
+        className="text-center py-8 text-xs mt-4"
+        style={{ color: 'var(--color-fg-muted)', borderTop: '1px solid var(--color-border)' }}
+      >
+        Powered by{' '}
+        <Link to="/" className="font-semibold" style={{ color: 'var(--color-accent)' }}>
+          LigaManager Pro
+        </Link>
       </footer>
     </div>
   )

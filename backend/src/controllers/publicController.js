@@ -67,9 +67,19 @@ exports.hub = async (req, res, next) => {
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
       .slice(0, 12)
 
-    // Fechas con resultados (últimas 20 jornadas finalizadas)
+    // Fechas con resultados: jornadas que tienen partidos jugados (sin importar si la fecha es futura)
+    const jugadosIds = todasJornadas.length
+      ? await Partido.find({
+          jornada_id: { $in: todasJornadas.map(j => j._id) },
+          estado: { $in: ['jugado', 'wo'] },
+          es_bye: { $ne: true },
+        }).select('jornada_id').lean()
+      : []
+
+    const jornadaIdsConResultados = new Set(jugadosIds.map(p => p.jornada_id?.toString()))
+
     const jornadasConResultado = todasJornadas
-      .filter(j => j.estado === 'finalizada' || new Date(j.fecha) < today)
+      .filter(j => jornadaIdsConResultados.has(j._id.toString()))
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
     const fechasSet = []
