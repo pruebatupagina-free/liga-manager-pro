@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage'
 import PerfilPublico from './pages/public/PerfilPublico'
 import TorneoPublico from './pages/public/TorneoPublico'
 import EquipoPublico from './pages/public/EquipoPublico'
+import ArbitroPage from './pages/public/ArbitroPage'
 
 import DashboardPage from './pages/DashboardPage'
 import LigasPage from './pages/LigasPage'
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/:username" element={<PerfilPublico />} />
       <Route path="/:username/:ligaSlug" element={<TorneoPublico />} />
       <Route path="/:username/:ligaSlug/equipo/:equipoSlug" element={<EquipoPublico />} />
+      <Route path="/arbitro/:token" element={<ArbitroPage />} />
 
       {/* Privadas */}
       <Route

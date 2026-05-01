@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { Plus, Calendar, ChevronDown, ChevronUp, Send, RefreshCw } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, Send, Link2 } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import ModalResultado from '../components/modals/ModalResultado'
 import { estadoBadge } from '../components/ui/Badge'
 import client from '../api/client'
+
+const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, '') || ''
 
 function timeSlots(horaInicio, horaFin, duracion) {
   const slots = []
@@ -70,6 +72,18 @@ export default function JornadasPage() {
     onSuccess: res => toast.success(`WhatsApp enviado a ${res.data.enviados} equipos`),
     onError: err => toast.error(err.response?.data?.error || 'Error al enviar'),
   })
+
+  async function copyLinkArbitro(e, partidoId) {
+    e.stopPropagation()
+    try {
+      const { data } = await client.post(`/partidos/${partidoId}/generar-token`)
+      const url = `${window.location.origin}${BASE_URL}/arbitro/${data.token}`
+      await navigator.clipboard.writeText(url)
+      toast.success('Link de árbitro copiado')
+    } catch {
+      toast.error('Error al generar link')
+    }
+  }
 
   const cfg = liga?.configuracion
   const slots = cfg ? timeSlots(cfg.hora_inicio, cfg.hora_fin, cfg.duracion_partido || 60) : []
@@ -184,6 +198,17 @@ export default function JornadasPage() {
                               {p.es_revancha && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>Rev</span>}
                               {p.es_extra && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7' }}>Extra</span>}
                               {estadoBadge(p.estado)}
+                              {!p.es_bye && (
+                                <button
+                                  onClick={e => copyLinkArbitro(e, p._id)}
+                                  className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+                                  style={{ color: 'var(--color-fg-muted)' }}
+                                  title="Copiar link de árbitro"
+                                  aria-label="Copiar link de árbitro"
+                                >
+                                  <Link2 size={14} />
+                                </button>
+                              )}
                             </div>
                           </button>
                         ))
