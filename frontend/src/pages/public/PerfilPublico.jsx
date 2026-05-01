@@ -204,7 +204,7 @@ function SeccionProximos({ proximos }) {
                     <p className="text-2xl font-black leading-none" style={{ color: '#EF4444' }}>{d.getDate()}</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-sm capitalize" style={{ color: 'var(--color-fg)' }}>
+                    <p className="font-semibold text-sm" style={{ color: 'var(--color-fg)' }}>
                       {DIAS_ES[d.getDay()].toLowerCase()} {d.getDate()} de {MESES_ES[d.getMonth()]}
                     </p>
                     <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>
@@ -280,7 +280,7 @@ function SeccionResultados({ fechas, username }) {
           {/* Selected date label */}
           {fechaActiva && (
             <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-border)' }}>
-              <p className="text-sm font-medium capitalize" style={{ color: 'var(--color-accent)' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--color-accent)' }}>
                 {formatFechaLarga(fechaActiva)}
               </p>
             </div>
