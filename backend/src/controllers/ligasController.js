@@ -142,7 +142,7 @@ exports.remove = async (req, res, next) => {
 
     const tieneJornadas = await Jornada.exists({ liga_id: liga._id })
     if (tieneJornadas) {
-      const { password } = req.body
+      const { password } = req.body || {}
       if (!password) return res.status(400).json({ error: 'Esta liga tiene jornadas. Confirma con tu contraseña para eliminarla.' })
       const user = await Usuario.findById(req.user.id).select('+password')
       const ok = await bcrypt.compare(password, user.password)
