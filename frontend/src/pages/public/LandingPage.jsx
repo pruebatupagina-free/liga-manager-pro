@@ -1,176 +1,668 @@
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Trophy, Calendar, DollarSign, BarChart2, MessageSquare, Users, Check, Zap } from 'lucide-react'
+import {
+  Trophy, Calendar, DollarSign, BarChart2, MessageSquare,
+  Check, Zap, ChevronRight, Star, ArrowRight,
+} from 'lucide-react'
+
+const WA_URL = 'https://wa.me/528139863634?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20LigaManager%20Pro%20%F0%9F%8F%86'
+
+// ─── FadeIn on scroll ────────────────────────────────────────────────────────
+function FadeIn({ children, delay = 0, style = {}, className = '' }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.opacity = '0'
+    el.style.transform = 'translateY(28px)'
+    el.style.transition = `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.style.opacity = '1'
+          el.style.transform = 'translateY(0)'
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.08 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [delay])
+  return <div ref={ref} style={style} className={className}>{children}</div>
+}
+
+// ─── Animated counter ────────────────────────────────────────────────────────
+function Counter({ to, suffix = '' }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef(null)
+  const fired = useRef(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !fired.current) {
+          fired.current = true
+          const steps = 50
+          let i = 0
+          const id = setInterval(() => {
+            i++
+            setVal(Math.round((to / steps) * i))
+            if (i >= steps) { setVal(to); clearInterval(id) }
+          }, 1600 / steps)
+        }
+      },
+      { threshold: 0.5 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [to])
+  return <span ref={ref}>{val.toLocaleString('es-MX')}{suffix}</span>
+}
+
+// ─── Browser mockup ──────────────────────────────────────────────────────────
+function BrowserMockup({ src, alt = 'LigaManager Pro' }) {
+  return (
+    <div style={{
+      borderRadius: 20, overflow: 'hidden',
+      boxShadow: '0 24px 80px rgba(0,0,0,0.13), 0 0 0 1px var(--color-border)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '9px 14px',
+        background: 'var(--color-secondary)',
+        borderBottom: '1px solid var(--color-border)',
+      }}>
+        <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#FF5F57', flexShrink: 0 }} />
+        <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#FFBD2E', flexShrink: 0 }} />
+        <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28CA41', flexShrink: 0 }} />
+        <span style={{
+          flex: 1, marginLeft: 8, padding: '2px 10px', borderRadius: 6,
+          fontSize: 11, fontFamily: 'monospace',
+          background: 'var(--color-bg)', color: 'var(--color-fg-muted)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>app.ligamanager.pro</span>
+      </div>
+      <img src={src} alt={alt} style={{ width: '100%', display: 'block' }} />
+    </div>
+  )
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const STATS = [
+  { to: 500,    suffix: '+', label: 'Organizadores'   },
+  { to: 5000,   suffix: '+', label: 'Equipos'          },
+  { to: 25000,  suffix: '+', label: 'Jugadores'        },
+  { to: 100000, suffix: '+', label: 'Partidos jugados' },
+]
 
 const FEATURES = [
-  { icon: Trophy, title: 'Ligas completas', desc: 'Configura días, canchas, horarios y cuotas en minutos.' },
-  { icon: Calendar, title: 'Jornadas automáticas', desc: 'Round Robin inteligente con respeto a horas fijas.' },
-  { icon: DollarSign, title: 'Control de cobros', desc: 'Inscripciones, arbitrajes y pago fijo por equipo.' },
-  { icon: BarChart2, title: 'Estadísticas', desc: 'Tabla, goleadores, rendimiento y comparativas.' },
-  { icon: MessageSquare, title: 'Asistente IA', desc: 'Pregunta sobre tu liga con Claude AI. 30 msg/día.' },
-  { icon: Users, title: 'Página pública', desc: 'URL pública para que los participantes vean todo.' },
+  {
+    tag: 'Jornadas y Calendario',
+    title: 'Gestión para',
+    bold: 'Ligas y Torneos.',
+    desc: 'Todo lo necesario para llevar tu torneo de manera organizada y profesional.',
+    bullets: [
+      'Genera jornadas Round Robin en segundos',
+      'Resultados en tiempo real desde el celular',
+      'Estadísticas y tabla de posiciones automática',
+      'Canchas, horarios y días personalizables',
+    ],
+    img: '/liga-manager-pro/landing/ss-jornadas.png',
+    flip: false,
+  },
+  {
+    tag: 'Finanzas',
+    title: 'Control de',
+    bold: 'cobros.',
+    desc: 'Lleva el control de inscripciones, pagos y pendientes sin complicaciones.',
+    bullets: [
+      'Cobra inscripciones por equipo o jugador',
+      'Registra pagos de arbitraje por jornada',
+      'Ve quién debe y cuánto al instante',
+      'Exporta reportes en PDF y Excel',
+    ],
+    img: '/liga-manager-pro/landing/ss-cobros.png',
+    flip: true,
+  },
+  {
+    tag: 'Estadísticas',
+    title: 'Datos y',
+    bold: 'rendimiento.',
+    desc: 'Tabla de posiciones, goleadores y comparativas. Todo actualizado al momento.',
+    bullets: [
+      'Tabla de posiciones en tiempo real',
+      'Ranking de goleadores por liga',
+      'Análisis de rendimiento por equipo',
+      'Página pública para que todos la vean',
+    ],
+    img: '/liga-manager-pro/landing/ss-estadisticas.png',
+    flip: false,
+  },
+]
+
+const CARDS = [
+  { icon: Calendar,      title: 'Jornadas automáticas', desc: 'Round Robin inteligente con respeto a horas y canchas fijas.',               img: '/liga-manager-pro/landing/ss-jornadas.png'    },
+  { icon: DollarSign,    title: 'Control de cobros',     desc: 'Inscripciones, arbitrajes y pagos. Todo organizado por equipo.',            img: '/liga-manager-pro/landing/ss-cobros.png'      },
+  { icon: BarChart2,     title: 'Estadísticas',          desc: 'Tabla, goleadores y rendimiento actualizados al instante.',                 img: '/liga-manager-pro/landing/ss-estadisticas.png' },
+  { icon: MessageSquare, title: 'Asistente IA',          desc: 'Pregúntale a Claude AI sobre tu liga. 30 consultas por día incluidas.',     img: '/liga-manager-pro/landing/ss-chatbot.png'     },
+]
+
+const TESTIMONIALS = [
+  { initial: 'C', name: 'Carlos Mendoza',    liga: 'Liga AMC Dominical',    text: 'Antes perdía horas armando el calendario a mano. Ahora lo tengo listo en 2 minutos. Increíble.' },
+  { initial: 'R', name: 'Roberto Garza',     liga: 'Liga Sabatina MTY',     text: 'El control de cobros es lo que más me gustó. Sé exactamente quién debe y cuánto sin andar persiguiendo a nadie.' },
+  { initial: 'M', name: 'Miguel Torres',     liga: 'Torneo Regio 2026',     text: 'Los árbitros ya no me llaman para preguntar marcadores. Todo lo ven directo en la app en tiempo real.' },
+  { initial: 'J', name: 'Javier Luna',       liga: 'Copa Noreste FC',       text: 'Mis jugadores están encantados con la página pública. Ya ven resultados solos, sin preguntarme nada.' },
+  { initial: 'A', name: 'Alejandro Soto',    liga: 'Liga Dominical Sur',    text: 'La IA me dice quién puede ganar el torneo con solo preguntarle. Eso sí que impresiona a los capitanes.' },
+  { initial: 'F', name: 'Fernando Vázquez',  liga: 'Torneo Intercolegial',  text: 'Administro 3 ligas al mismo tiempo y no me pierdo. Antes era completamente imposible sin esta herramienta.' },
 ]
 
 const PLANES = [
   {
-    nombre: 'Básico',
-    precio: '$299',
-    periodo: '/mes',
+    nombre: 'Básico', precio: '$299', periodo: '/mes', accent: false,
     features: ['1 liga activa', 'Hasta 16 equipos', 'Estadísticas básicas', 'Página pública', 'Soporte por email'],
-    accent: false,
   },
   {
-    nombre: 'Profesional',
-    precio: '$599',
-    periodo: '/mes',
+    nombre: 'Profesional', precio: '$599', periodo: '/mes', accent: true,
     features: ['Ligas ilimitadas', 'Equipos ilimitados', 'Asistente IA', 'Export PDF & Excel', 'WhatsApp automático', 'Liguilla/Playoffs', 'Soporte prioritario'],
-    accent: true,
   },
   {
-    nombre: 'Ilimitado',
-    precio: '$999',
-    periodo: '/mes',
+    nombre: 'Ilimitado', precio: '$999', periodo: '/mes', accent: false,
     features: ['Todo lo anterior', 'Multi-admin', 'API acceso', 'Onboarding dedicado', 'SLA 99.9%'],
-    accent: false,
   },
 ]
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 24)
+    window.addEventListener('scroll', fn, { passive: true })
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
+
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-bg)' }}>
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--color-border)', background: 'var(--color-primary)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-accent)' }}>
-            <Trophy size={16} style={{ color: '#020617' }} />
+    <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
+
+      {/* ── Responsive helpers ──────────────────────────────────────────── */}
+      <style>{`
+        .lp-hero   { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+        .lp-feat   { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        .lp-cards  { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .lp-testi  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .lp-planes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .lp-stats  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
+        .lp-footer-cols { display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+        .lp-footer-links { display: flex; gap: 64px; flex-wrap: wrap; }
+        @media (max-width: 1024px) {
+          .lp-hero  { grid-template-columns: 1fr; }
+          .lp-feat  { grid-template-columns: 1fr; gap: 40px; }
+          .lp-feat-img-flip { order: -1 !important; }
+          .lp-planes{ grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+          .lp-testi { grid-template-columns: repeat(2, 1fr); }
+          .lp-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+          .lp-cards { grid-template-columns: 1fr; }
+          .lp-testi { grid-template-columns: 1fr; }
+          .lp-stats { grid-template-columns: repeat(2, 1fr); }
+          .lp-footer-links { gap: 32px; }
+        }
+      `}</style>
+
+      {/* ── Nav ─────────────────────────────────────────────────────────── */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 40px', height: 68,
+        background: 'var(--color-primary)',
+        borderBottom: '1px solid ' + (scrolled ? 'var(--color-border)' : 'transparent'),
+        boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.06)' : 'none',
+        transition: 'box-shadow 0.25s, border-color 0.25s',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-accent)' }}>
+            <Trophy size={17} style={{ color: '#020617' }} />
           </div>
-          <span className="font-display text-xl" style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-display)' }}>LigaManager Pro</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--color-fg)', letterSpacing: '0.05em' }}>
+            LigaManager Pro
+          </span>
         </div>
-        <Link
-          to="/login"
-          className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer"
-          style={{ background: 'var(--color-accent)', color: '#020617' }}
-        >
-          Iniciar sesión
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <a href="#features" style={{
+            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+            color: 'var(--color-fg-muted)', textDecoration: 'none',
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+          >Plataforma</a>
+          <a href="#precios" style={{
+            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+            color: 'var(--color-fg-muted)', textDecoration: 'none',
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+          >Precios</a>
+          <Link to="/login" style={{
+            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+            color: 'var(--color-fg-muted)', textDecoration: 'none',
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+          >Iniciar sesión</Link>
+          <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+            padding: '9px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600,
+            background: 'var(--color-fg)', color: 'var(--color-bg)', textDecoration: 'none',
+            transition: 'opacity 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.82'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >Comenzar gratis</a>
+        </div>
       </nav>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center text-center px-4 py-24" style={{ background: 'radial-gradient(ellipse at 50% 0%, #0F2A1A 0%, var(--color-bg) 60%)', minHeight: 'calc(100vh - 72px)' }}>
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-8"
-          style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.3)' }}
-        >
-          <Zap size={12} /> Gestión profesional de ligas amateur
-        </div>
-        <h1
-          className="font-display text-6xl md:text-8xl mb-6 glow-green"
-          style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)', lineHeight: 1 }}
-        >
-          TU LIGA,<br /><span style={{ color: 'var(--color-accent)' }}>SIN CAOS</span>
-        </h1>
-        <p className="text-lg max-w-xl mx-auto mb-10" style={{ color: 'var(--color-fg-muted)' }}>
-          Administra jornadas, cobros, estadísticas y comunicación de tu liga de fútbol desde un solo lugar.
-        </p>
-        <div className="flex items-center justify-center gap-4 flex-wrap">
-          <Link
-            to="/login"
-            className="px-6 py-3 rounded-2xl font-semibold cursor-pointer text-base"
-            style={{ background: 'var(--color-accent)', color: '#020617' }}
-          >
-            Empezar gratis
-          </Link>
-          <a href="#features" className="px-6 py-3 rounded-2xl font-semibold cursor-pointer text-base" style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}>
-            Ver funciones
-          </a>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 40px 60px' }}>
+        <div className="lp-hero">
+          <FadeIn>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '5px 14px', borderRadius: 100, marginBottom: 24,
+              background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)',
+              fontSize: 13, color: 'var(--color-accent)', fontWeight: 500,
+            }}>
+              <Zap size={12} /> Gestión profesional de ligas amateur
+            </div>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontSize: 'clamp(48px,6vw,78px)',
+              lineHeight: 1.0, color: 'var(--color-fg)', marginBottom: 22,
+              letterSpacing: '0.02em',
+            }}>
+              ADMINISTRA<br />TU LIGA<br />
+              <span style={{ color: 'var(--color-accent)' }}>SIN CAOS</span>
+            </h1>
+            <p style={{ fontSize: 17, color: 'var(--color-fg-muted)', lineHeight: 1.65, maxWidth: 420, marginBottom: 36 }}>
+              Jornadas automáticas, cobros, estadísticas y asistente IA. Todo lo que necesitas para organizar tu liga desde un solo lugar.
+            </p>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 36 }}>
+              <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '13px 26px', borderRadius: 14, fontSize: 15, fontWeight: 600,
+                background: 'var(--color-accent)', color: '#020617', textDecoration: 'none',
+                transition: 'opacity 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                Comenzar gratis <ChevronRight size={16} />
+              </a>
+              <a href="#features" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '13px 26px', borderRadius: 14, fontSize: 15, fontWeight: 500,
+                background: 'var(--color-secondary)', color: 'var(--color-fg)', textDecoration: 'none',
+              }}>Ver funciones</a>
+            </div>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              padding: '8px 16px', borderRadius: 100,
+              background: 'var(--color-secondary)', border: '1px solid var(--color-border)',
+              fontSize: 13, color: 'var(--color-fg-muted)',
+            }}>
+              <div style={{ display: 'flex' }}>
+                {['🏆','⚽','🥅'].map((e, i) => (
+                  <span key={i} style={{
+                    width: 26, height: 26, borderRadius: '50%', fontSize: 13,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'var(--color-accent)', marginLeft: i > 0 ? -7 : 0,
+                    border: '2px solid var(--color-secondary)', zIndex: 3 - i, position: 'relative',
+                  }}>{e}</span>
+                ))}
+              </div>
+              <span><strong style={{ color: 'var(--color-fg)' }}>+500</strong> organizadores confían en nosotros</span>
+            </div>
+          </FadeIn>
+          <FadeIn delay={160}>
+            <BrowserMockup src="/liga-manager-pro/landing/ss-dashboard.png" alt="Dashboard LigaManager Pro" />
+          </FadeIn>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" style={{ padding: '80px 0 120px' }}>
-        <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '0 32px' }}>
-          <h2 className="font-display text-4xl text-center mb-14" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
-            TODO LO QUE NECESITAS
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" style={{ gap: '24px' }}>
-            {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div
-                key={title}
-                className="rounded-2xl glow-card hover:scale-[1.02] transition-all"
-                style={{ background: 'var(--color-primary)', padding: '32px' }}
-              >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(34,197,94,0.1)' }}>
-                  <Icon size={22} style={{ color: 'var(--color-accent)' }} />
+      {/* ── Stats ─────────────────────────────────────────────────────────── */}
+      <section style={{
+        background: 'var(--color-primary)',
+        borderTop: '1px solid var(--color-border)',
+        borderBottom: '1px solid var(--color-border)',
+        padding: '52px 40px',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, color: 'var(--color-accent)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 36 }}>
+            Una comunidad que está creciendo
+          </p>
+          <div className="lp-stats" style={{ maxWidth: 1200, margin: '0 auto' }}>
+            {STATS.map(({ to, suffix, label }) => (
+              <div key={label}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 56, lineHeight: 1, color: 'var(--color-accent)', letterSpacing: '0.02em' }}>
+                  <Counter to={to} suffix={suffix} />
                 </div>
-                <h3 className="font-semibold mb-2" style={{ color: 'var(--color-fg)' }}>{title}</h3>
-                <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{desc}</p>
+                <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', marginTop: 6, fontWeight: 500 }}>{label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Precios */}
-      <section style={{ paddingBottom: '80px' }}>
-        <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '0 32px' }}>
-          <h2 className="font-display text-4xl text-center mb-14" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
-            PLANES Y PRECIOS
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '24px' }}>
-            {PLANES.map(plan => (
-              <div
-                key={plan.nombre}
-                className="rounded-2xl flex flex-col"
-                style={{
-                  background: plan.accent ? 'var(--gradient-featured)' : 'var(--color-primary)',
-                  border: plan.accent ? '1px solid #22C55E' : '1px solid var(--color-border)',
-                  boxShadow: plan.accent ? '0 0 30px rgba(34,197,94,0.15)' : undefined,
-                  padding: '32px',
-                }}
-              >
-                {plan.accent && (
-                  <span className="text-xs font-semibold px-3 py-1 rounded-full mb-4 self-start" style={{ background: 'var(--color-accent)', color: '#020617' }}>
-                    Más popular
-                  </span>
-                )}
-                <h3 className="font-display text-2xl mb-1" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{plan.nombre}</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-display text-4xl" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{plan.precio}</span>
-                  <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{plan.periodo}</span>
-                </div>
-                <ul className="space-y-3 flex-1 mb-6">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--color-fg)' }}>
-                      <Check size={15} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
-                      {f}
+      {/* ── Feature sections ──────────────────────────────────────────────── */}
+      <div id="features">
+        {FEATURES.map(({ tag, title, bold, desc, bullets, img, flip }) => (
+          <section key={tag} style={{ maxWidth: 1200, margin: '0 auto', padding: '96px 40px' }}>
+            <div className="lp-feat">
+              <FadeIn style={{ order: flip ? 1 : 0 }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 600, color: 'var(--color-accent)',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 12,
+                }}>{tag}</span>
+                <h2 style={{
+                  fontFamily: 'var(--font-display)', fontSize: 'clamp(36px,4vw,52px)',
+                  lineHeight: 1.05, color: 'var(--color-fg)', marginBottom: 16,
+                }}>
+                  {title}<br /><strong>{bold}</strong>
+                </h2>
+                <p style={{ fontSize: 16, color: 'var(--color-fg-muted)', lineHeight: 1.65, marginBottom: 28 }}>{desc}</p>
+                <ul style={{ listStyle: 'none', marginBottom: 36, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {bullets.map(b => (
+                    <li key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--color-fg)' }}>
+                      <span style={{
+                        width: 20, height: 20, borderRadius: '50%', flexShrink: 0, marginTop: 2,
+                        background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Check size={11} style={{ color: 'var(--color-accent)' }} />
+                      </span>
+                      {b}
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to="/login"
-                  className="block text-center py-3 rounded-xl font-semibold cursor-pointer text-sm"
-                  style={{
-                    background: plan.accent ? 'var(--color-accent)' : 'var(--color-secondary)',
-                    color: plan.accent ? '#020617' : 'var(--color-fg)',
-                  }}
+                <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '11px 22px', borderRadius: 12, fontSize: 14, fontWeight: 600,
+                  background: 'var(--color-accent)', color: '#020617', textDecoration: 'none',
+                  transition: 'opacity 0.15s',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
-                  Comenzar
-                </Link>
-              </div>
+                  Conoce más <ArrowRight size={14} />
+                </a>
+              </FadeIn>
+              <FadeIn delay={120} className={flip ? 'lp-feat-img-flip' : ''} style={{ order: flip ? 0 : 1 }}>
+                <BrowserMockup src={img} />
+              </FadeIn>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* ── Green CTA banner ──────────────────────────────────────────────── */}
+      <section style={{ padding: '0 40px 96px' }}>
+        <FadeIn>
+          <div style={{
+            maxWidth: 1200, margin: '0 auto', borderRadius: 24, padding: '52px 60px',
+            background: 'var(--color-accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap',
+          }}>
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 38, color: '#020617', marginBottom: 8, letterSpacing: '0.02em' }}>
+                EMPIEZA A ORGANIZAR SIN COSTO
+              </h2>
+              <p style={{ fontSize: 16, color: 'rgba(2,6,23,0.72)' }}>Prueba gratis. Sin tarjeta de crédito. Cancela cuando quieras.</p>
+            </div>
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+              padding: '14px 28px', borderRadius: 14, fontSize: 15, fontWeight: 700,
+              background: '#020617', color: '#fff', textDecoration: 'none',
+              transition: 'opacity 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              Comenzar gratis <ChevronRight size={16} />
+            </a>
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* ── Feature cards grid ────────────────────────────────────────────── */}
+      <section style={{ padding: '0 40px 96px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <FadeIn>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              Nuestras características
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 44, color: 'var(--color-fg)', marginBottom: 14, letterSpacing: '0.02em' }}>
+              AUTOMATIZA TUS ACTIVIDADES
+            </h2>
+            <p style={{ fontSize: 16, color: 'var(--color-fg-muted)', maxWidth: 560, marginBottom: 48, lineHeight: 1.6 }}>
+              Administra cada aspecto de tu liga desde un solo lugar. Ahorra horas de trabajo manual cada semana.
+            </p>
+          </FadeIn>
+          <div className="lp-cards">
+            {CARDS.map(({ icon: Icon, title, desc, img }, i) => (
+              <FadeIn key={title} delay={i * 80}>
+                <div style={{
+                  borderRadius: 20, overflow: 'hidden',
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-primary)',
+                  transition: 'transform 0.22s ease, box-shadow 0.22s ease',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 20px 56px rgba(0,0,0,0.12)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+                >
+                  <div style={{ height: 220, overflow: 'hidden', background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+                    <img src={img} alt={title} style={{ width: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                  </div>
+                  <div style={{ padding: '20px 24px 26px' }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10, marginBottom: 12,
+                      background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={18} style={{ color: 'var(--color-accent)' }} />
+                    </div>
+                    <h3 style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-fg)', marginBottom: 6 }}>{title}</h3>
+                    <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', lineHeight: 1.6 }}>{desc}</p>
+                  </div>
+                </div>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="text-center px-4 py-10 border-t" style={{ borderColor: 'var(--color-border)', color: 'var(--color-fg-muted)' }}>
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-accent)' }}>
-            <Trophy size={14} style={{ color: '#020617' }} />
+      {/* ── Testimonials ──────────────────────────────────────────────────── */}
+      <section style={{
+        background: 'var(--color-primary)',
+        borderTop: '1px solid var(--color-border)',
+        padding: '96px 40px',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <FadeIn>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center', marginBottom: 8 }}>
+              Reseñas
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 44, color: 'var(--color-fg)', textAlign: 'center', marginBottom: 10, letterSpacing: '0.02em' }}>
+              QUÉ DICEN NUESTROS CLIENTES
+            </h2>
+            <p style={{ fontSize: 15, color: 'var(--color-fg-muted)', textAlign: 'center', marginBottom: 56 }}>
+              +500 organizadores usan nuestra plataforma
+            </p>
+          </FadeIn>
+          <div className="lp-testi">
+            {TESTIMONIALS.map(({ initial, name, liga, text }, i) => (
+              <FadeIn key={name} delay={i * 65}>
+                <div style={{
+                  padding: '24px', borderRadius: 16,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-bg)',
+                  height: '100%',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    <div style={{
+                      width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
+                      background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'var(--font-display)', fontSize: 20, color: '#020617',
+                    }}>{initial}</div>
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-fg)' }}>{name}</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-accent)', fontWeight: 500 }}>{liga}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 2, marginBottom: 12 }}>
+                    {[1,2,3,4,5].map(s => <Star key={s} size={12} fill="var(--color-accent)" style={{ color: 'var(--color-accent)' }} />)}
+                  </div>
+                  <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', lineHeight: 1.65 }}>{text}</p>
+                </div>
+              </FadeIn>
+            ))}
           </div>
-          <span className="font-display text-lg" style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-display)' }}>LigaManager Pro</span>
         </div>
-        <p className="text-sm">© {new Date().getFullYear()} LigaManager Pro. Todos los derechos reservados.</p>
+      </section>
+
+      {/* ── Precios ───────────────────────────────────────────────────────── */}
+      <section id="precios" style={{ padding: '96px 40px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <FadeIn>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center', marginBottom: 8 }}>
+              Precios
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 44, color: 'var(--color-fg)', textAlign: 'center', marginBottom: 10, letterSpacing: '0.02em' }}>
+              PLANES Y PRECIOS
+            </h2>
+            <p style={{ fontSize: 15, color: 'var(--color-fg-muted)', textAlign: 'center', marginBottom: 56 }}>
+              Sin contratos. Sin sorpresas. Cancela cuando quieras.
+            </p>
+          </FadeIn>
+          <div className="lp-planes">
+            {PLANES.map((plan, i) => (
+              <FadeIn key={plan.nombre} delay={i * 80}>
+                <div style={{
+                  borderRadius: 20, padding: '36px 32px', display: 'flex', flexDirection: 'column',
+                  position: 'relative',
+                  border: plan.accent ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                  background: plan.accent ? 'var(--gradient-featured)' : 'var(--color-primary)',
+                  boxShadow: plan.accent ? '0 0 48px rgba(34,197,94,0.14)' : undefined,
+                }}>
+                  {plan.accent && (
+                    <span style={{
+                      position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+                      background: 'var(--color-accent)', color: '#020617',
+                      fontSize: 12, fontWeight: 700, padding: '4px 14px', borderRadius: 100, whiteSpace: 'nowrap',
+                    }}>Más popular</span>
+                  )}
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--color-fg)', marginBottom: 4 }}>{plan.nombre}</h3>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 28 }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 50, color: 'var(--color-fg)' }}>{plan.precio}</span>
+                    <span style={{ fontSize: 14, color: 'var(--color-fg-muted)' }}>{plan.periodo}</span>
+                  </div>
+                  <ul style={{ listStyle: 'none', flex: 1, marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {plan.features.map(f => (
+                      <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--color-fg)' }}>
+                        <Check size={14} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12,
+                    fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                    background: plan.accent ? 'var(--color-accent)' : 'var(--color-secondary)',
+                    color: plan.accent ? '#020617' : 'var(--color-fg)',
+                    transition: 'opacity 0.15s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                  >Comenzar</a>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Final CTA ─────────────────────────────────────────────────────── */}
+      <section style={{ padding: '0 40px 96px' }}>
+        <FadeIn>
+          <div style={{
+            maxWidth: 1200, margin: '0 auto', borderRadius: 24, padding: '52px 60px',
+            background: 'var(--color-accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap',
+          }}>
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: '#020617', marginBottom: 8 }}>
+                ¿LISTO PARA ORGANIZAR TU LIGA?
+              </h2>
+              <p style={{ fontSize: 15, color: 'rgba(2,6,23,0.7)' }}>Únete a +500 organizadores. Empieza hoy mismo, sin costo.</p>
+            </div>
+            <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+              padding: '14px 28px', borderRadius: 14, fontSize: 15, fontWeight: 700,
+              background: '#020617', color: '#fff', textDecoration: 'none',
+              transition: 'opacity 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.82'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              Comenzar gratis <ChevronRight size={16} />
+            </a>
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer style={{ background: '#0D1117', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '64px 40px 40px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div className="lp-footer-cols" style={{ marginBottom: 52 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Trophy size={15} style={{ color: '#020617' }} />
+                </div>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--color-accent)' }}>LigaManager Pro</span>
+              </div>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.38)', maxWidth: 240, lineHeight: 1.65 }}>
+                Gestión profesional de ligas amateur. Simple y rápido.
+              </p>
+            </div>
+            <div className="lp-footer-links">
+              {[
+                { title: 'Plataforma', links: ['Dashboard', 'Ligas', 'Jornadas', 'Cobros', 'Estadísticas'] },
+                { title: 'Recursos',   links: ['Precios', 'Soporte', 'Página pública', 'Asistente IA'] },
+                { title: 'Empresa',    links: ['Términos', 'Privacidad', 'Contacto'] },
+              ].map(col => (
+                <div key={col.title}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 16 }}>
+                    {col.title}
+                  </p>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {col.links.map(l => (
+                      <li key={l}>
+                        <Link to="/login" style={{ fontSize: 14, color: 'rgba(255,255,255,0.42)', textDecoration: 'none', transition: 'color 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.88)'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.42)'}
+                        >{l}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.28)' }}>
+              © {new Date().getFullYear()} LigaManager Pro. Todos los derechos reservados. Hecho en México 🇲🇽
+            </p>
+          </div>
+        </div>
       </footer>
+
     </div>
   )
 }

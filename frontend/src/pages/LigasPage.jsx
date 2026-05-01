@@ -90,10 +90,24 @@ export default function LigasPage() {
     queryFn: () => client.get('/ligas').then(r => r.data),
   })
 
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deletePassword, setDeletePassword] = useState('')
+
   const clonar = useMutation({
     mutationFn: id => client.post(`/ligas/${id}/clonar`),
     onSuccess: () => { qc.invalidateQueries(['ligas']); toast.success('Liga clonada') },
     onError: err => toast.error(err.response?.data?.error || 'Error al clonar'),
+  })
+
+  const eliminar = useMutation({
+    mutationFn: ({ id, password }) => client.delete(`/ligas/${id}`, { data: { password } }),
+    onSuccess: () => {
+      qc.invalidateQueries(['ligas'])
+      toast.success('Liga eliminada')
+      setDeleteConfirm(null)
+      setDeletePassword('')
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Error al eliminar'),
   })
 
   async function openGaleria(liga) {
@@ -295,6 +309,14 @@ export default function LigasPage() {
                   aria-label="Editar liga"
                 >
                   <Edit size={18} />
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(liga)}
+                  className="p-2 rounded-xl hover:bg-red-500/10 transition-all cursor-pointer"
+                  style={{ color: 'var(--color-destructive)' }}
+                  aria-label="Eliminar liga"
+                >
+                  <Trash2 size={18} />
                 </button>
                 <Link
                   to={`/dashboard/equipos/${liga._id}`}
@@ -563,6 +585,54 @@ export default function LigasPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete confirm modal */}
+      <Modal
+        open={!!deleteConfirm}
+        onClose={() => { setDeleteConfirm(null); setDeletePassword('') }}
+        title="ELIMINAR LIGA"
+        size="sm"
+      >
+        {deleteConfirm && (
+          <div className="space-y-4">
+            <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+              ¿Eliminar <span className="font-semibold" style={{ color: 'var(--color-fg)' }}>{deleteConfirm.nombre}</span>?
+              Esta acción no se puede deshacer y eliminará todos los equipos, jornadas y cobros asociados.
+            </p>
+            <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-destructive)' }}>
+                Confirma con tu contraseña para continuar
+              </p>
+              <input
+                type="password"
+                placeholder="Tu contraseña"
+                value={deletePassword}
+                onChange={e => setDeletePassword(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: 'var(--color-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteConfirm(null); setDeletePassword('') }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
+                style={{ background: 'var(--color-secondary)', color: 'var(--color-fg)' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => eliminar.mutate({ id: deleteConfirm._id, password: deletePassword })}
+                disabled={eliminar.isPending || !deletePassword}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-50"
+                style={{ background: 'var(--color-destructive)', color: '#fff' }}
+              >
+                {eliminar.isPending ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
           </div>
         )}
       </Modal>

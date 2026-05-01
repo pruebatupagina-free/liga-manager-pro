@@ -1,4 +1,5 @@
-const { Liga, Jornada, Equipo } = require('../models')
+const { Liga, Jornada, Equipo, Jugador, Partido, Gol, Tarjeta, Sancion, LiguillaGrupo, LiguillaPartido, Inscripcion, Usuario } = require('../models')
+const bcrypt = require('bcryptjs')
 const slugify = require('../utils/slugify')
 
 function checkOwner(liga, userId) {
@@ -138,8 +139,34 @@ exports.remove = async (req, res, next) => {
     if (req.user.rol !== 'superadmin' && !checkOwner(liga, req.user.id)) {
       return res.status(403).json({ error: 'Sin acceso' })
     }
+
     const tieneJornadas = await Jornada.exists({ liga_id: liga._id })
-    if (tieneJornadas) return res.status(400).json({ error: 'No se puede eliminar una liga con jornadas' })
+    if (tieneJornadas) {
+      const { password } = req.body
+      if (!password) return res.status(400).json({ error: 'Esta liga tiene jornadas. Confirma con tu contraseña para eliminarla.' })
+      const user = await Usuario.findById(req.user.id).select('+password')
+      const ok = await bcrypt.compare(password, user.password)
+      if (!ok) return res.status(401).json({ error: 'Contraseña incorrecta' })
+
+      // Borrado en cascada
+      const ligaId = liga._id
+      const equipos = await Equipo.find({ liga_id: ligaId }).select('_id')
+      const equipoIds = equipos.map(e => e._id)
+      const partidos = await Partido.find({ liga_id: ligaId }).select('_id')
+      const partidoIds = partidos.map(p => p._id)
+
+      await Gol.deleteMany({ partido_id: { $in: partidoIds } })
+      await Tarjeta.deleteMany({ partido_id: { $in: partidoIds } })
+      await Sancion.deleteMany({ equipo_id: { $in: equipoIds } })
+      await Partido.deleteMany({ liga_id: ligaId })
+      await Jornada.deleteMany({ liga_id: ligaId })
+      await LiguillaGrupo.deleteMany({ liga_id: ligaId })
+      await LiguillaPartido.deleteMany({ liga_id: ligaId })
+      await Inscripcion.deleteMany({ liga_id: ligaId })
+      await Jugador.deleteMany({ equipo_id: { $in: equipoIds } })
+      await Equipo.deleteMany({ liga_id: ligaId })
+    }
+
     await liga.deleteOne()
     res.json({ ok: true })
   } catch (err) { next(err) }
