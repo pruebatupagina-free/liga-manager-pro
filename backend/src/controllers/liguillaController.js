@@ -43,7 +43,8 @@ exports.generar = async (req, res, next) => {
     if (!liga) return res.status(403).json({ error: 'Sin acceso' })
 
     const liguilla = liga.configuracion?.liguilla
-    if (!liguilla?.activa) return res.status(400).json({ error: 'Liguilla no está configurada para esta liga' })
+    const tieneLiguilla = liguilla?.activa || liga.configuracion?.tiene_liguilla
+    if (!tieneLiguilla) return res.status(400).json({ error: 'Liguilla no está configurada para esta liga' })
 
     const existente = await LiguillaGrupo.findOne({ liga_id }).session(session)
     if (existente) {
@@ -51,8 +52,8 @@ exports.generar = async (req, res, next) => {
       return res.status(409).json({ error: 'La liguilla ya fue generada' })
     }
 
-    const numClasificados = liguilla.clasificados_por_grupo || 4
-    const numGrupos = liguilla.num_grupos || 1
+    const numClasificados = liguilla?.clasificados_por_grupo || 8
+    const numGrupos = liguilla?.num_grupos || 3
 
     // Obtener tabla de posiciones de la fase regular
     const jornadas = await Jornada.find({ liga_id }).lean()
