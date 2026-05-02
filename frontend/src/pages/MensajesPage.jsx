@@ -55,6 +55,18 @@ export default function MensajesPage() {
   const mensajes = mensajesData?.mensajes || []
 
   useEffect(() => {
+    const originalTitle = document.title
+    return () => { document.title = originalTitle }
+  }, [])
+
+  useEffect(() => {
+    const totalUnread = conversaciones.reduce((sum, conv) => {
+      return sum + (isVendedor ? (conv.no_leidos_vendedor || 0) : (conv.no_leidos_equipo || 0))
+    }, 0)
+    document.title = totalUnread > 0 ? `(${totalUnread}) LigaManager Pro` : 'LigaManager Pro'
+  }, [conversaciones, isVendedor])
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [mensajes.length])
 
