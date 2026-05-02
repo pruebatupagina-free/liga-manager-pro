@@ -5,7 +5,7 @@ const partidoSchema = new mongoose.Schema(
     jornada_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Jornada', required: true },
     liga_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Liga', required: true },
     equipo_local_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipo', required: true },
-    equipo_visitante_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipo', required: true },
+    equipo_visitante_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipo', default: null },
     cancha: { type: Number, default: 1 },
     hora: { type: String, default: null },
     goles_local: { type: Number, default: null },
