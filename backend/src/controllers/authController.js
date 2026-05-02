@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 const { Usuario } = require('../models')
+const { sendPasswordReset } = require('../utils/email')
 
 const RESERVED = ['login', 'dashboard', 'admin', 'api', 'ligas', 'equipos', 'usuarios', 'solicitudes']
 
@@ -67,6 +69,57 @@ exports.ping = async (req, res, next) => {
     const { dispositivo = 'desktop' } = req.body
     await Usuario.findByIdAndUpdate(req.user.id, { ultimo_ping: new Date(), dispositivo })
     res.json({ ok: true })
+  } catch (err) { next(err) }
+}
+
+// POST /api/auth/forgot-password
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body
+    if (!email) return res.status(400).json({ error: 'Email requerido' })
+
+    const user = await Usuario.findOne({ email: email.toLowerCase() })
+    // Responder siempre igual para no revelar si el email existe
+    if (!user) return res.json({ message: 'Si el email existe, recibirás un enlace en breve.' })
+
+    const token = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hora
+
+    user.resetToken = token
+    user.resetTokenExpires = expires
+    await user.save()
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+    const resetUrl = `${frontendUrl}/reset-password/${token}`
+
+    await sendPasswordReset(user.email, resetUrl)
+    res.json({ message: 'Si el email existe, recibirás un enlace en breve.' })
+  } catch (err) { next(err) }
+}
+
+// POST /api/auth/reset-password/:token
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { token } = req.params
+    const { password } = req.body
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' })
+    }
+
+    const user = await Usuario.findOne({
+      resetToken: token,
+      resetTokenExpires: { $gt: new Date() },
+    })
+
+    if (!user) return res.status(400).json({ error: 'Token inválido o expirado' })
+
+    user.password = await bcrypt.hash(password, 12)
+    user.resetToken = null
+    user.resetTokenExpires = null
+    await user.save()
+
+    res.json({ message: 'Contraseña actualizada correctamente' })
   } catch (err) { next(err) }
 }
 

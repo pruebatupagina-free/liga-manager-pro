@@ -6,6 +6,8 @@ import ThemeToggle from './components/ui/ThemeToggle'
 
 import LandingPage from './pages/public/LandingPage'
 import LoginPage from './pages/LoginPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import PerfilPublico from './pages/public/PerfilPublico'
 import TorneoPublico from './pages/public/TorneoPublico'
 import EquipoPublico from './pages/public/EquipoPublico'
@@ -42,6 +44,8 @@ export default function App() {
       {/* Públicas */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/:username" element={<PerfilPublico />} />
       <Route path="/:username/:ligaSlug" element={<TorneoPublico />} />
       <Route path="/:username/:ligaSlug/equipo/:equipoSlug" element={<EquipoPublico />} />

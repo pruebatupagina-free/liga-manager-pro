@@ -38,6 +38,8 @@ const usuarioSchema = new mongoose.Schema(
       count: { type: Number, default: 0 },
       fecha: { type: Date, default: null },
     },
+    resetToken: { type: String, default: null },
+    resetTokenExpires: { type: Date, default: null },
   },
   { timestamps: true }
 )

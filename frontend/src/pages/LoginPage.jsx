@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Trophy, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
@@ -132,6 +132,13 @@ export default function LoginPage() {
             {loading && <Loader2 size={18} className="animate-spin" />}
             Entrar
           </button>
+          <Link
+            to="/forgot-password"
+            className="block text-center text-xs mt-3"
+            style={{ color: 'var(--color-fg-muted)' }}
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
         </form>
 
         <p className="text-center text-xs mt-6" style={{ color: 'var(--color-fg-muted)' }}>
