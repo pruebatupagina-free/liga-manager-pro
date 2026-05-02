@@ -21,10 +21,11 @@ export default function LoginPage() {
     try {
       const { data } = await client.post('/auth/login', { email, password })
       login(data.token)
+      const rol = data.user?.rol
       const from = location.state?.from?.pathname
-      if (data.rol === 'superadmin') navigate('/admin', { replace: true })
-      else if (data.rol === 'dueno_equipo') navigate('/mi-equipo', { replace: true })
-      else if (data.rol === 'vendedor') navigate('/mi-negocio', { replace: true })
+      if (rol === 'superadmin') navigate('/admin', { replace: true })
+      else if (rol === 'dueno_equipo') navigate('/mi-equipo', { replace: true })
+      else if (rol === 'vendedor') navigate('/mi-negocio', { replace: true })
       else navigate(from || '/dashboard', { replace: true })
     } catch (err) {
       toast.error(err.response?.data?.error || 'Credenciales incorrectas')

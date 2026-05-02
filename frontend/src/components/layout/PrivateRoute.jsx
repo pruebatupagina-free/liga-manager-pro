@@ -9,6 +9,12 @@ export default function PrivateRoute({ children, roles }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  // Roles that have their own area and must not enter the main dashboard
+  if (!roles) {
+    if (user.rol === 'dueno_equipo') return <Navigate to="/mi-equipo" replace />
+    if (user.rol === 'vendedor') return <Navigate to="/mi-negocio" replace />
+  }
+
   if (roles && !roles.includes(user.rol)) {
     if (user.rol === 'dueno_equipo') return <Navigate to="/mi-equipo" replace />
     if (user.rol === 'vendedor') return <Navigate to="/mi-negocio" replace />
