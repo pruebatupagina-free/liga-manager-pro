@@ -28,6 +28,7 @@ import MiJugadoresPage from './pages/equipo/MiJugadoresPage'
 import MiPagosPage from './pages/equipo/MiPagosPage'
 import FeedPage from './pages/FeedPage'
 import MarketplacePage from './pages/MarketplacePage'
+import VendedoresLigaPage from './pages/VendedoresLigaPage'
 import MensajesPage from './pages/MensajesPage'
 import VendedorLayout from './components/layout/VendedorLayout'
 import MisProductosPage from './pages/vendedor/MisProductosPage'
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="inscripciones/:liga_id" element={<InscripcionesPage />} />
         <Route path="chatbot" element={<ChatbotPage />} />
         <Route path="feed/:liga_id" element={<FeedPage />} />
+        <Route path="vendedores/:liga_id" element={<VendedoresLigaPage />} />
         <Route path="marketplace/:liga_id" element={<MarketplacePage />} />
       </Route>
 

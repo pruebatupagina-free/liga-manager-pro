@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import {
   LayoutDashboard, Trophy, Users, User, Calendar,
   DollarSign, BarChart2, Award, MessageSquare, Shield,
-  LogOut, HelpCircle, ChevronLeft, ChevronRight, ClipboardList, Newspaper, ShoppingBag
+  LogOut, HelpCircle, ChevronLeft, ChevronRight, ClipboardList, Newspaper, ShoppingBag, Store
 } from 'lucide-react'
 
 const navItems = [
@@ -29,7 +29,8 @@ export default function Sidebar({ collapsed, onToggle, onTourStart, liga_id }) {
     { to: `/dashboard/liguilla/${liga_id}`, icon: Award, label: 'Liguilla' },
     { to: `/dashboard/inscripciones/${liga_id}`, icon: ClipboardList, label: 'Inscripciones' },
     { to: `/dashboard/feed/${liga_id}`, icon: Newspaper, label: 'Feed' },
-    { to: `/dashboard/marketplace/${liga_id}`, icon: ShoppingBag, label: 'Marketplace' },
+    { to: `/dashboard/vendedores/${liga_id}`, icon: ShoppingBag, label: 'Vendedores' },
+    { to: `/dashboard/marketplace/${liga_id}`, icon: Store, label: 'Marketplace' },
   ] : []
 
   function handleLogout() {
