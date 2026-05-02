@@ -22,6 +22,11 @@ const ligaSchema = new mongoose.Schema(
       costo_arbitraje: { type: Number, default: 0 },
       pago_fijo_temporada: { type: Number, default: 0 },
       tiene_liguilla: { type: Boolean, default: false },
+      liguilla: {
+        activa: { type: Boolean, default: false },
+        num_grupos: { type: Number, default: 1 },
+        clasificados_por_grupo: { type: Number, default: 4 },
+      },
       criterios_desempate: [{ type: String }],
     },
     reglamento: { type: String, default: '' },
