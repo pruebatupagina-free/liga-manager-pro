@@ -38,6 +38,8 @@ app.use('/api/admin', require('./routes/admin'))
 app.use('/api/arbitro', require('./routes/arbitro'))
 app.use('/api/inscripciones', require('./routes/inscripciones'))
 app.use('/api/posts', require('./routes/posts'))
+app.use('/api/productos', require('./routes/productos'))
+app.use('/api/mensajes', require('./routes/mensajes'))
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date() }))
 

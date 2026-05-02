@@ -27,6 +27,11 @@ import MiEquipoPage from './pages/equipo/MiEquipoPage'
 import MiJugadoresPage from './pages/equipo/MiJugadoresPage'
 import MiPagosPage from './pages/equipo/MiPagosPage'
 import FeedPage from './pages/FeedPage'
+import MarketplacePage from './pages/MarketplacePage'
+import MensajesPage from './pages/MensajesPage'
+import VendedorLayout from './components/layout/VendedorLayout'
+import MisProductosPage from './pages/vendedor/MisProductosPage'
+import VendedorHomePage from './pages/vendedor/VendedorHomePage'
 
 export default function App() {
   return (
@@ -62,6 +67,7 @@ export default function App() {
         <Route path="inscripciones/:liga_id" element={<InscripcionesPage />} />
         <Route path="chatbot" element={<ChatbotPage />} />
         <Route path="feed/:liga_id" element={<FeedPage />} />
+        <Route path="marketplace/:liga_id" element={<MarketplacePage />} />
       </Route>
 
       {/* Admin */}
@@ -87,8 +93,24 @@ export default function App() {
       >
         <Route index element={<MiEquipoPage />} />
         <Route path="feed" element={<FeedPage />} />
+        <Route path="marketplace" element={<MarketplacePage />} />
+        <Route path="mensajes" element={<MensajesPage />} />
         <Route path="jugadores" element={<MiJugadoresPage />} />
         <Route path="pagos" element={<MiPagosPage />} />
+      </Route>
+
+      {/* Vendedor */}
+      <Route
+        path="/mi-negocio"
+        element={
+          <PrivateRoute roles={['vendedor']}>
+            <VendedorLayout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<VendedorHomePage />} />
+        <Route path="productos" element={<MisProductosPage />} />
+        <Route path="mensajes" element={<MensajesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

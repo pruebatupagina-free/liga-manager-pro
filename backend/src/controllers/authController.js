@@ -73,7 +73,10 @@ exports.ping = async (req, res, next) => {
 // GET /api/auth/me
 exports.me = async (req, res, next) => {
   try {
-    const user = await Usuario.findById(req.user.id).select('-password').lean()
+    const user = await Usuario.findById(req.user.id)
+      .select('-password')
+      .populate('ligas_asignadas', 'nombre slug')
+      .lean()
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
     res.json(user)
   } catch (err) { next(err) }

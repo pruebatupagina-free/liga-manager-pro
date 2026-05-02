@@ -75,14 +75,14 @@ function PostCard({ post, userId, onDelete, onLike }) {
   )
 }
 
-export default function FeedPage() {
+export default function FeedPage({ overrideLigaId } = {}) {
   const params = useParams()
   const context = useOutletContext()
   const { user } = useAuth()
   const qc = useQueryClient()
   const fileRef = useRef()
 
-  const ligaId = params.liga_id || context?.equipo?.liga_id
+  const ligaId = overrideLigaId || params.liga_id || context?.equipo?.liga_id
   const ligaNombre = context?.liga?.nombre
 
   const [texto, setTexto] = useState('')

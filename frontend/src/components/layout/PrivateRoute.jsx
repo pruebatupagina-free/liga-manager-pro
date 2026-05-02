@@ -11,6 +11,7 @@ export default function PrivateRoute({ children, roles }) {
 
   if (roles && !roles.includes(user.rol)) {
     if (user.rol === 'dueno_equipo') return <Navigate to="/mi-equipo" replace />
+    if (user.rol === 'vendedor') return <Navigate to="/mi-negocio" replace />
     return <Navigate to="/dashboard" replace />
   }
 

@@ -1,5 +1,8 @@
 module.exports = {
   Post: require('./Post'),
+  Producto: require('./Producto'),
+  Conversacion: require('./Conversacion'),
+  Mensaje: require('./Mensaje'),
   Usuario: require('./Usuario'),
   Liga: require('./Liga'),
   Equipo: require('./Equipo'),

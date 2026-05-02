@@ -1,4 +1,5 @@
 const { Usuario, Liga } = require('../models')
+const bcrypt = require('bcryptjs')
 
 // GET /api/admin/usuarios
 exports.listarUsuarios = async (req, res, next) => {
@@ -108,5 +109,81 @@ exports.listarLigas = async (req, res, next) => {
       .sort('-createdAt')
       .lean()
     res.json(ligas)
+  } catch (err) { next(err) }
+}
+
+// GET /api/admin/vendedores
+exports.listarVendedores = async (req, res, next) => {
+  try {
+    const vendedores = await Usuario.find({ rol: 'vendedor' })
+      .select('-password')
+      .sort('-createdAt')
+      .lean()
+    res.json({ vendedores })
+  } catch (err) { next(err) }
+}
+
+// POST /api/admin/vendedores
+exports.crearVendedor = async (req, res, next) => {
+  try {
+    const { nombre, email, password, negocio, ligas_asignadas } = req.body
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: 'nombre, email y password requeridos' })
+    }
+    const existe = await Usuario.findOne({ email: email.toLowerCase() })
+    if (existe) return res.status(409).json({ error: 'Email ya en uso' })
+
+    const hash = await bcrypt.hash(password, 10)
+    const vendedor = await Usuario.create({
+      nombre,
+      email: email.toLowerCase(),
+      password: hash,
+      rol: 'vendedor',
+      negocio: negocio || {},
+      ligas_asignadas: ligas_asignadas || [],
+    })
+    const { password: _p, ...safe } = vendedor.toObject()
+    res.status(201).json(safe)
+  } catch (err) { next(err) }
+}
+
+// PUT /api/admin/vendedores/:id
+exports.editarVendedor = async (req, res, next) => {
+  try {
+    const { nombre, email, password, negocio } = req.body
+    const vendedor = await Usuario.findOne({ _id: req.params.id, rol: 'vendedor' })
+    if (!vendedor) return res.status(404).json({ error: 'Vendedor no encontrado' })
+
+    if (nombre) vendedor.nombre = nombre
+    if (email && email !== vendedor.email) {
+      const existe = await Usuario.findOne({ email: email.toLowerCase(), _id: { $ne: vendedor._id } })
+      if (existe) return res.status(409).json({ error: 'Email ya en uso' })
+      vendedor.email = email.toLowerCase()
+    }
+    if (password) vendedor.password = await bcrypt.hash(password, 10)
+    if (negocio) {
+      vendedor.negocio = { ...vendedor.negocio.toObject?.() || vendedor.negocio, ...negocio }
+    }
+
+    await vendedor.save()
+    const { password: _p, ...safe } = vendedor.toObject()
+    res.json(safe)
+  } catch (err) { next(err) }
+}
+
+// PUT /api/admin/vendedores/:id/ligas
+exports.asignarLigas = async (req, res, next) => {
+  try {
+    const { ligas_asignadas } = req.body
+    if (!Array.isArray(ligas_asignadas)) {
+      return res.status(400).json({ error: 'ligas_asignadas debe ser un array' })
+    }
+    const vendedor = await Usuario.findOneAndUpdate(
+      { _id: req.params.id, rol: 'vendedor' },
+      { ligas_asignadas },
+      { new: true, select: '-password' }
+    ).lean()
+    if (!vendedor) return res.status(404).json({ error: 'Vendedor no encontrado' })
+    res.json(vendedor)
   } catch (err) { next(err) }
 }

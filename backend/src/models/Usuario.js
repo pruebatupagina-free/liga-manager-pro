@@ -7,12 +7,20 @@ const usuarioSchema = new mongoose.Schema(
     password: { type: String, required: true },
     rol: {
       type: String,
-      enum: ['superadmin', 'admin_liga', 'dueno_equipo'],
+      enum: ['superadmin', 'admin_liga', 'dueno_equipo', 'vendedor'],
       required: true,
     },
     username: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     foto: { type: String, default: null },
     telefono: { type: String, default: null },
+    negocio: {
+      nombre:      { type: String, default: null },
+      descripcion: { type: String, default: null },
+      logo:        { type: String, default: null },
+      categoria:   { type: String, default: null },
+      whatsapp:    { type: String, default: null },
+    },
+    ligas_asignadas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Liga' }],
     licencia: {
       plan: { type: String, enum: ['basico', 'pro', 'elite'], default: 'basico' },
       estado: {

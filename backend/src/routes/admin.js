@@ -12,4 +12,10 @@ router.put('/usuarios/:id/rol', ctrl.editarRol)
 router.delete('/usuarios/:id', ctrl.eliminarUsuario)
 router.get('/ligas', ctrl.listarLigas)
 
+// Vendedores
+router.get('/vendedores', ctrl.listarVendedores)
+router.post('/vendedores', ctrl.crearVendedor)
+router.put('/vendedores/:id', ctrl.editarVendedor)
+router.put('/vendedores/:id/ligas', ctrl.asignarLigas)
+
 module.exports = router
