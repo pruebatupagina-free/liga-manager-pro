@@ -34,8 +34,6 @@ exports.getEstado = async (req, res, next) => {
 
 // POST /api/liguilla/generar  { liga_id }
 exports.generar = async (req, res, next) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
   try {
     const { liga_id } = req.body
     if (!liga_id) return res.status(400).json({ error: 'liga_id requerido' })
@@ -46,27 +44,21 @@ exports.generar = async (req, res, next) => {
     const tieneLiguilla = liguilla?.activa || liga.configuracion?.tiene_liguilla
     if (!tieneLiguilla) return res.status(400).json({ error: 'Liguilla no está configurada para esta liga' })
 
-    const existente = await LiguillaGrupo.findOne({ liga_id }).session(session)
-    if (existente) {
-      await session.abortTransaction()
-      return res.status(409).json({ error: 'La liguilla ya fue generada' })
-    }
+    const existente = await LiguillaGrupo.findOne({ liga_id })
+    if (existente) return res.status(409).json({ error: 'La liguilla ya fue generada' })
 
     const numClasificados = liguilla?.clasificados_por_grupo || 8
     const numGrupos = liguilla?.num_grupos || 3
 
-    // Obtener tabla de posiciones de la fase regular
     const jornadas = await Jornada.find({ liga_id }).lean()
     const jornadasFaseRegular = jornadas.filter(j => j.estado === 'jugada' || j.estado === 'finalizada')
     if (jornadasFaseRegular.length === 0) {
-      await session.abortTransaction()
       return res.status(400).json({ error: 'No hay jornadas finalizadas para generar liguilla' })
     }
 
     const equiposAll = await Equipo.find({ liga_id, 'baja.activa': { $ne: true } }).lean()
     const partidos = await Partido.find({ liga_id, estado: { $in: ['jugado', 'wo'] } }).lean()
 
-    // Calcular tabla simple
     const stats = {}
     equiposAll.forEach(e => { stats[e._id.toString()] = { equipo: e, Pts: 0, DG: 0, GF: 0 } })
     partidos.filter(p => !p.es_bye).forEach(p => {
@@ -76,8 +68,8 @@ exports.generar = async (req, res, next) => {
       const gv = p.goles_visitante ?? 0
       if (!stats[lid] || !stats[vid]) return
       stats[lid].GF += gl; stats[vid].GF += gv
-      if (gl > gv) { stats[lid].Pts += 3 }
-      else if (gl < gv) { stats[vid].Pts += 3 }
+      if (gl > gv) stats[lid].Pts += 3
+      else if (gl < gv) stats[vid].Pts += 3
       else { stats[lid].Pts++; stats[vid].Pts++ }
       stats[lid].DG += (gl - gv); stats[vid].DG += (gv - gl)
     })
@@ -88,21 +80,18 @@ exports.generar = async (req, res, next) => {
       .map(s => s.equipo)
 
     if (clasificados.length < numClasificados * numGrupos) {
-      await session.abortTransaction()
-      return res.status(400).json({ error: `No hay suficientes equipos clasificados (${clasificados.length}/${numClasificados * numGrupos})` })
+      return res.status(400).json({ error: `No hay suficientes equipos (${clasificados.length}/${numClasificados * numGrupos})` })
     }
 
-    // Crear grupos y sus partidos
     const gruposCreados = []
     for (let g = 0; g < numGrupos; g++) {
       const equiposGrupo = clasificados.slice(g * numClasificados, (g + 1) * numClasificados)
-      const [grupo] = await LiguillaGrupo.create([{
+      const grupo = await LiguillaGrupo.create({
         liga_id,
         numero_grupo: g + 1,
         equipos: equiposGrupo.map(e => e._id),
-      }], { session })
+      })
 
-      // Round robin dentro del grupo
       const partidosGrupo = []
       for (let i = 0; i < equiposGrupo.length; i++) {
         for (let j = i + 1; j < equiposGrupo.length; j++) {
@@ -116,18 +105,12 @@ exports.generar = async (req, res, next) => {
           })
         }
       }
-      await LiguillaPartido.insertMany(partidosGrupo, { session })
+      await LiguillaPartido.insertMany(partidosGrupo)
       gruposCreados.push(grupo)
     }
 
-    await session.commitTransaction()
     res.status(201).json({ grupos: gruposCreados.length, mensaje: 'Liguilla generada exitosamente' })
-  } catch (err) {
-    await session.abortTransaction()
-    next(err)
-  } finally {
-    session.endSession()
-  }
+  } catch (err) { next(err) }
 }
 
 // PUT /api/liguilla/partido/:id/resultado
