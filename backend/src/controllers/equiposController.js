@@ -72,6 +72,7 @@ exports.update = [
       const campos = ['nombre', 'dia_juego', 'hora_fija', 'telefono', 'whatsapp', 'color_principal']
       campos.forEach(c => { if (req.body[c] !== undefined) equipo[c] = req.body[c] })
       if (req.body.tiene_hora_fija !== undefined) equipo.tiene_hora_fija = req.body.tiene_hora_fija === true || req.body.tiene_hora_fija === 'true'
+      if (liga && req.body.dueno_id !== undefined) equipo.dueno_id = req.body.dueno_id || null
 
       if (req.body.baja !== undefined) {
         const { activa, motivo, conservar_partidos } = JSON.parse(req.body.baja)
