@@ -35,25 +35,25 @@ exports.getUsuario = async (req, res, next) => {
 exports.editarUsuario = async (req, res, next) => {
   try {
     const { nombre, email, username, telefono } = req.body
-    const user = await Usuario.findById(req.params.id)
+    const user = await Usuario.findById(req.params.id).lean()
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
 
-    if (email && email !== user.email) {
+    const update = {}
+    if (email && email.toLowerCase() !== user.email) {
       const existe = await Usuario.findOne({ email: email.toLowerCase(), _id: { $ne: user._id } })
       if (existe) return res.status(409).json({ error: 'Email ya en uso' })
-      user.email = email.toLowerCase()
+      update.email = email.toLowerCase()
     }
-    if (username && username !== user.username) {
+    if (username && username.toLowerCase() !== user.username) {
       const existe = await Usuario.findOne({ username: username.toLowerCase(), _id: { $ne: user._id } })
       if (existe) return res.status(409).json({ error: 'Username ya en uso' })
-      user.username = username.toLowerCase()
+      update.username = username.toLowerCase()
     }
-    if (nombre) user.nombre = nombre
-    if (telefono !== undefined) user.telefono = telefono
+    if (nombre) update.nombre = nombre
+    if (telefono !== undefined) update.telefono = telefono
 
-    await user.save()
-    const { password, __v, ...safe } = user.toObject()
-    res.json(safe)
+    const updated = await Usuario.findByIdAndUpdate(user._id, { $set: update }, { new: true, select: '-password -__v' }).lean()
+    res.json(updated)
   } catch (err) { next(err) }
 }
 
@@ -61,14 +61,13 @@ exports.editarUsuario = async (req, res, next) => {
 exports.editarLicencia = async (req, res, next) => {
   try {
     const { estado, fecha_vencimiento, plan } = req.body
-    const user = await Usuario.findById(req.params.id)
+    const update = {}
+    if (estado) update['licencia.estado'] = estado
+    if (fecha_vencimiento) update['licencia.fecha_vencimiento'] = new Date(fecha_vencimiento)
+    if (plan) update['licencia.plan'] = plan
+
+    const user = await Usuario.findByIdAndUpdate(req.params.id, { $set: update }, { new: true, select: 'licencia' }).lean()
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
-
-    if (estado) user.licencia.estado = estado
-    if (fecha_vencimiento) user.licencia.fecha_vencimiento = new Date(fecha_vencimiento)
-    if (plan) user.licencia.plan = plan
-
-    await user.save()
     res.json({ licencia: user.licencia })
   } catch (err) { next(err) }
 }
@@ -154,20 +153,22 @@ exports.editarVendedor = async (req, res, next) => {
     const vendedor = await Usuario.findOne({ _id: req.params.id, rol: 'vendedor' })
     if (!vendedor) return res.status(404).json({ error: 'Vendedor no encontrado' })
 
-    if (nombre) vendedor.nombre = nombre
-    if (email && email !== vendedor.email) {
+    const update = {}
+    if (nombre) update.nombre = nombre
+    if (email && email.toLowerCase() !== vendedor.email) {
       const existe = await Usuario.findOne({ email: email.toLowerCase(), _id: { $ne: vendedor._id } })
       if (existe) return res.status(409).json({ error: 'Email ya en uso' })
-      vendedor.email = email.toLowerCase()
+      update.email = email.toLowerCase()
     }
-    if (password) vendedor.password = await bcrypt.hash(password, 10)
+    if (password) update.password = await bcrypt.hash(password, 10)
     if (negocio) {
-      vendedor.negocio = { ...vendedor.negocio.toObject?.() || vendedor.negocio, ...negocio }
+      const base = vendedor.negocio?.toObject?.() || vendedor.negocio || {}
+      const merged = { ...base, ...negocio }
+      Object.entries(merged).forEach(([k, v]) => { update[`negocio.${k}`] = v })
     }
 
-    await vendedor.save()
-    const { password: _p, ...safe } = vendedor.toObject()
-    res.json(safe)
+    const updated = await Usuario.findByIdAndUpdate(vendedor._id, { $set: update }, { new: true, select: '-password -__v' }).lean()
+    res.json(updated)
   } catch (err) { next(err) }
 }
 
