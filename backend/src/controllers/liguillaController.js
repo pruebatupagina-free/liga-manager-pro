@@ -9,6 +9,19 @@ async function verificarAdmin(ligaId, user) {
   return null
 }
 
+// DELETE /api/liguilla?liga_id=xxx — reset liguilla for regeneration
+exports.reset = async (req, res, next) => {
+  try {
+    const { liga_id } = req.query
+    if (!liga_id) return res.status(400).json({ error: 'liga_id requerido' })
+    const liga = await verificarAdmin(liga_id, req.user)
+    if (!liga) return res.status(403).json({ error: 'Sin acceso' })
+    await LiguillaPartido.deleteMany({ liga_id })
+    await LiguillaGrupo.deleteMany({ liga_id })
+    res.json({ ok: true, mensaje: 'Liguilla reseteada' })
+  } catch (err) { next(err) }
+}
+
 // GET /api/liguilla?liga_id=xxx
 exports.getEstado = async (req, res, next) => {
   try {

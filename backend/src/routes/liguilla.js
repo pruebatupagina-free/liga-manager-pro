@@ -7,6 +7,7 @@ const ctrl = require('../controllers/liguillaController')
 router.use(auth, licencia)
 router.get('/', ctrl.getEstado)
 router.post('/generar', roles('admin_liga', 'superadmin'), ctrl.generar)
+router.delete('/', roles('admin_liga', 'superadmin'), ctrl.reset)
 router.put('/partido/:id/resultado', roles('admin_liga', 'superadmin'), ctrl.guardarResultado)
 
 module.exports = router
