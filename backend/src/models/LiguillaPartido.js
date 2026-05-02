@@ -2,12 +2,17 @@ const mongoose = require('mongoose')
 
 const liguillaPartidoSchema = new mongoose.Schema(
   {
-    grupo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'LiguillaGrupo', required: true },
+    grupo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'LiguillaGrupo', default: null },
     liga_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Liga', required: true },
     fase: {
       type: String,
-      enum: ['cuartos', 'semis', 'final'],
+      enum: ['grupos', 'cuartos', 'semis', 'final'],
       required: true,
+    },
+    estado: {
+      type: String,
+      enum: ['programado', 'jugado', 'cancelado'],
+      default: 'programado',
     },
     equipo_local_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipo', required: true },
     equipo_visitante_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipo', required: true },
