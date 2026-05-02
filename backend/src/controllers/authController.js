@@ -85,9 +85,10 @@ exports.forgotPassword = async (req, res, next) => {
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hora
 
-    user.resetToken = token
-    user.resetTokenExpires = expires
-    await user.save()
+    await Usuario.updateOne(
+      { _id: user._id },
+      { $set: { resetToken: token, resetTokenExpires: expires } }
+    )
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
     const resetUrl = `${frontendUrl}/reset-password/${token}`
@@ -114,10 +115,11 @@ exports.resetPassword = async (req, res, next) => {
 
     if (!user) return res.status(400).json({ error: 'Token inválido o expirado' })
 
-    user.password = await bcrypt.hash(password, 12)
-    user.resetToken = null
-    user.resetTokenExpires = null
-    await user.save()
+    const hashedPassword = await bcrypt.hash(password, 12)
+    await Usuario.updateOne(
+      { _id: user._id },
+      { $set: { password: hashedPassword, resetToken: null, resetTokenExpires: null } }
+    )
 
     res.json({ message: 'Contraseña actualizada correctamente' })
   } catch (err) { next(err) }
