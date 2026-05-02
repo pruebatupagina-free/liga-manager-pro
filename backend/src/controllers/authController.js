@@ -93,9 +93,14 @@ exports.forgotPassword = async (req, res, next) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
     const resetUrl = `${frontendUrl}/reset-password/${token}`
 
-    // Respond immediately; fire email in background so slow SMTP doesn't block the client
-    res.json({ message: 'Si el email existe, recibirás un enlace en breve.' })
-    sendPasswordReset(user.email, resetUrl).catch(err => console.error('Email send failed:', err))
+    // DEBUG: synchronous send to surface errors (restore fire-and-forget after debug)
+    try {
+      await sendPasswordReset(user.email, resetUrl)
+      res.json({ message: 'Si el email existe, recibirás un enlace en breve.' })
+    } catch (err) {
+      console.error('Email send failed:', err)
+      res.status(500).json({ error: `Email failed: ${err.message}` })
+    }
   } catch (err) { next(err) }
 }
 
