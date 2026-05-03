@@ -159,7 +159,7 @@ exports.guardarResultado = async (req, res, next) => {
 
     await partido.save()
 
-    // Si fase de grupos terminó, generar eliminatorias
+    // Si fase de grupos terminó, generar cuartos
     if (esGrupo) {
       const grupo = await LiguillaGrupo.findById(partido.grupo_id)
       const todosJugados = await LiguillaPartido.countDocuments({
@@ -169,6 +169,22 @@ exports.guardarResultado = async (req, res, next) => {
       if (todosJugados === 0 && grupo) {
         await generarEliminatorias(partido.liga_id)
       }
+    }
+
+    // Si cuartos terminaron todos, generar semis
+    if (partido.fase === 'cuartos') {
+      const pendientesCuartos = await LiguillaPartido.countDocuments({
+        liga_id: partido.liga_id, fase: 'cuartos', estado: { $ne: 'jugado' },
+      })
+      if (pendientesCuartos === 0) await generarSiguienteFase(partido.liga_id, 'cuartos', 'semis')
+    }
+
+    // Si semis terminaron todas, generar final
+    if (partido.fase === 'semis') {
+      const pendientesSemis = await LiguillaPartido.countDocuments({
+        liga_id: partido.liga_id, fase: 'semis', estado: { $ne: 'jugado' },
+      })
+      if (pendientesSemis === 0) await generarSiguienteFase(partido.liga_id, 'semis', 'final')
     }
 
     res.json(partido)
@@ -214,6 +230,27 @@ async function generarEliminatorias(ligaId) {
     if (clasificadosPorGrupo[j]?.[0] && clasificadosPorGrupo[i]?.[1]) {
       partidos.push({ liga_id: ligaId, fase, equipo_local_id: clasificadosPorGrupo[j][0], equipo_visitante_id: clasificadosPorGrupo[i][1], estado: 'programado' })
     }
+  }
+  if (partidos.length) await LiguillaPartido.insertMany(partidos)
+}
+
+// Genera la siguiente ronda eliminatoria: ganadores de faseActual pasan a faseNext
+async function generarSiguienteFase(ligaId, faseActual, faseNext) {
+  const ya = await LiguillaPartido.findOne({ liga_id: ligaId, fase: faseNext })
+  if (ya) return
+
+  const jugados = await LiguillaPartido.find({ liga_id: ligaId, fase: faseActual, estado: 'jugado' }).lean()
+  const ganadores = jugados.map(p => p.ganador_id).filter(Boolean)
+
+  const partidos = []
+  for (let i = 0; i < ganadores.length - 1; i += 2) {
+    partidos.push({
+      liga_id: ligaId,
+      fase: faseNext,
+      equipo_local_id: ganadores[i],
+      equipo_visitante_id: ganadores[i + 1],
+      estado: 'programado',
+    })
   }
   if (partidos.length) await LiguillaPartido.insertMany(partidos)
 }
