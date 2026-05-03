@@ -5,7 +5,7 @@ const PostSchema = new mongoose.Schema({
   autor_id:     { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
   autor_nombre: { type: String, required: true },
   autor_logo:   { type: String, default: null },
-  autor_tipo:   { type: String, enum: ['admin_liga', 'dueno_equipo', 'superadmin'], required: true },
+  autor_tipo:   { type: String, enum: ['admin_liga', 'dueno_equipo', 'superadmin', 'vendedor'], required: true },
   texto:        { type: String, required: true, maxlength: 1000 },
   imagen:       { type: String, default: null },
   likes:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],

@@ -1,10 +1,11 @@
-const { Post, Liga, Equipo } = require('../models')
+const { Post, Liga, Equipo, Usuario } = require('../models')
 const { upload, uploadToCloudinary, deleteFromCloudinary } = require('../utils/upload')
 
 async function verificarAcceso(ligaId, user) {
   if (user.rol === 'superadmin') return true
   if (user.rol === 'admin_liga') return !!(await Liga.exists({ _id: ligaId, admin_id: user.id }))
   if (user.rol === 'dueno_equipo') return !!(await Equipo.exists({ liga_id: ligaId, dueno_id: user.id }))
+  if (user.rol === 'vendedor') return !!(await Usuario.exists({ _id: user.id, ligas_asignadas: ligaId }))
   return false
 }
 
@@ -42,6 +43,9 @@ exports.create = [
       } else if (req.user.rol === 'admin_liga') {
         const liga = await Liga.findById(liga_id).lean()
         if (liga) { autor_nombre = liga.nombre; autor_logo = liga.logo || null }
+      } else if (req.user.rol === 'vendedor') {
+        const v = await Usuario.findById(req.user.id).lean()
+        if (v?.negocio?.nombre) { autor_nombre = v.negocio.nombre; autor_logo = v.negocio.logo || null }
       }
 
       let imagenUrl = null
