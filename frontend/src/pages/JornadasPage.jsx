@@ -56,12 +56,10 @@ export default function JornadasPage() {
     queryFn: () => client.get('/partidos', { params: { liga_id } }).then(r => r.data),
   })
 
-  const { data: arbitrosData } = useQuery({
+  const { data: arbitros = [] } = useQuery({
     queryKey: ['arbitros', liga_id],
     queryFn: () => client.get('/arbitros', { params: { liga_id } }).then(r => r.data.arbitros),
-    initialData: [],
   })
-  const arbitros = arbitrosData || []
 
   const generar = useMutation({
     mutationFn: data => client.post('/jornadas/generar', data),
