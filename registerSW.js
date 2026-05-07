@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/liga-manager-pro/sw.js', { scope: '/liga-manager-pro/' })})}
