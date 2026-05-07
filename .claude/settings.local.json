@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Tibs\\\\clientes-web\\\\liga-manager-pro\" -Recurse -Directory -Exclude node_modules | Where-Object { $_.FullName -notmatch 'node_modules' } | Select-Object @{n='Path';e={$_.FullName.Replace\\('C:\\\\Users\\\\Tibs\\\\clientes-web\\\\liga-manager-pro\\\\', ''\\)}} | Sort-Object Path | ForEach-Object { $_.Path })",
+      "Bash(node -e ' *)",
+      "Bash(curl -s \"https://liga-manager-pro-production.up.railway.app/api/health\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl -sf \"https://liga-manager-pro-production.up.railway.app/api/health\")",
+      "Bash(curl -s -X POST \"https://liga-manager-pro-production.up.railway.app/api/auth/login\" -H \"Content-Type: application/json\" -d '{\"email\":\"amc@ligamanager.pro\",\"password\":\"AMC2026!Liga\"}')",
+      "PowerShell(Get-Content *)",
+      "Bash(node -e \"const p = require\\('C:/Users/Tibs/clientes-web/liga-manager-pro/frontend/node_modules/playwright'\\); console.log\\('playwright OK'\\)\")",
+      "Bash(node docs_playwright.js)",
+      "PowerShell(Stop-Process *)"
+    ]
+  }
+}
