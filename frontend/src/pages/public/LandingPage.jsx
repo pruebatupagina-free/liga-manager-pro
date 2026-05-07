@@ -250,14 +250,14 @@ export default function LandingPage() {
               onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
             >Precios</a>
-            <Link to="/login" style={{
-              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-              color: 'var(--color-fg-muted)', textDecoration: 'none',
-            }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-            >Iniciar sesión</Link>
           </div>
+          <Link to="/login" style={{
+            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+            color: 'var(--color-fg-muted)', textDecoration: 'none',
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+          >Iniciar sesión</Link>
           <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
             padding: '9px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600,
             background: 'var(--color-fg)', color: 'var(--color-bg)', textDecoration: 'none',
