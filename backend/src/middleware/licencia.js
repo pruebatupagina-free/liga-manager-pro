@@ -2,7 +2,7 @@ const { Usuario } = require('../models')
 
 module.exports = async (req, res, next) => {
   try {
-    if (['superadmin', 'dueno_equipo', 'vendedor'].includes(req.user.rol)) return next()
+    if (['superadmin', 'dueno_equipo', 'vendedor', 'arbitro'].includes(req.user.rol)) return next()
     const usuario = await Usuario.findById(req.user.id).lean()
     if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado' })
     const estado = usuario.licencia?.estado

@@ -2,6 +2,20 @@ const crypto = require('crypto')
 const { Partido, Gol, Jugador, Jornada, Liga } = require('../models')
 const calcularMVP = require('../utils/calcularMVP')
 
+// GET /api/arbitro/mis-partidos  (auth: arbitro)
+exports.getMisPartidos = async (req, res, next) => {
+  try {
+    const partidos = await Partido.find({ arbitro_id: req.user.id })
+      .populate('equipo_local_id', 'nombre logo color_principal')
+      .populate('equipo_visitante_id', 'nombre logo color_principal')
+      .populate('jornada_id', 'numero fecha')
+      .populate('liga_id', 'nombre slug')
+      .sort({ createdAt: -1 })
+      .lean()
+    res.json(partidos)
+  } catch (err) { next(err) }
+}
+
 async function getPartidoByToken(token) {
   return Partido.findOne({ token_arbitro: token })
     .populate('equipo_local_id', 'nombre logo color_principal')

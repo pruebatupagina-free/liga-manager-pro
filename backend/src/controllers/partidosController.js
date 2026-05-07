@@ -16,8 +16,23 @@ exports.getAll = async (req, res, next) => {
     const partidos = await Partido.find(filter)
       .populate('equipo_local_id', 'nombre logo color_principal')
       .populate('equipo_visitante_id', 'nombre logo color_principal')
+      .populate('arbitro_id', 'nombre email telefono')
       .lean()
     res.json(partidos)
+  } catch (err) { next(err) }
+}
+
+// PUT /api/partidos/:id/asignar-arbitro
+exports.asignarArbitro = async (req, res, next) => {
+  try {
+    const { arbitro_id } = req.body
+    const partido = await Partido.findById(req.params.id)
+    if (!partido) return res.status(404).json({ error: 'Partido no encontrado' })
+    const ok = await verificarAdmin(partido.liga_id, req.user)
+    if (!ok) return res.status(403).json({ error: 'Sin acceso' })
+    partido.arbitro_id = arbitro_id || null
+    await partido.save()
+    res.json({ ok: true })
   } catch (err) { next(err) }
 }
 

@@ -13,11 +13,13 @@ export default function PrivateRoute({ children, roles }) {
   if (!roles) {
     if (user.rol === 'dueno_equipo') return <Navigate to="/mi-equipo" replace />
     if (user.rol === 'vendedor') return <Navigate to="/mi-negocio" replace />
+    if (user.rol === 'arbitro') return <Navigate to="/mis-partidos" replace />
   }
 
   if (roles && !roles.includes(user.rol)) {
     if (user.rol === 'dueno_equipo') return <Navigate to="/mi-equipo" replace />
     if (user.rol === 'vendedor') return <Navigate to="/mi-negocio" replace />
+    if (user.rol === 'arbitro') return <Navigate to="/mis-partidos" replace />
     return <Navigate to="/dashboard" replace />
   }
 

@@ -35,6 +35,8 @@ import MensajesPage from './pages/MensajesPage'
 import VendedorLayout from './components/layout/VendedorLayout'
 import MisProductosPage from './pages/vendedor/MisProductosPage'
 import VendedorHomePage from './pages/vendedor/VendedorHomePage'
+import ArbitroLayout from './components/layout/ArbitroLayout'
+import MisPartidosPage from './pages/arbitro/MisPartidosPage'
 
 export default function App() {
   return (
@@ -117,6 +119,18 @@ export default function App() {
         <Route index element={<VendedorHomePage />} />
         <Route path="productos" element={<MisProductosPage />} />
         <Route path="mensajes" element={<MensajesPage />} />
+      </Route>
+
+      {/* Árbitro */}
+      <Route
+        path="/mis-partidos"
+        element={
+          <PrivateRoute roles={['arbitro']}>
+            <ArbitroLayout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<MisPartidosPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

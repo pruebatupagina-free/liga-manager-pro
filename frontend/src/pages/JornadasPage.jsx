@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { Plus, Calendar, ChevronDown, ChevronUp, Send, Link2 } from 'lucide-react'
+import { Plus, Calendar, ChevronDown, ChevronUp, Send, Link2, UserCheck } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import ModalResultado from '../components/modals/ModalResultado'
 import { estadoBadge } from '../components/ui/Badge'
@@ -34,6 +34,7 @@ export default function JornadasPage() {
   const [openJornada, setOpenJornada] = useState(null)
   const [genForm, setGenForm] = useState({ fecha: '', hora_inicio: '', notas: '', permitir_repetir: false })
   const [extraForm, setExtraForm] = useState({ jornada_id: '', equipo_local_id: '', equipo_visitante_id: '', hora: '', cancha: '' })
+  const [assigningArbitro, setAssigningArbitro] = useState(null)
 
   const { data: liga } = useQuery({
     queryKey: ['liga', liga_id],
@@ -55,6 +56,13 @@ export default function JornadasPage() {
     queryFn: () => client.get('/partidos', { params: { liga_id } }).then(r => r.data),
   })
 
+  const { data: arbitrosData } = useQuery({
+    queryKey: ['arbitros', liga_id],
+    queryFn: () => client.get('/arbitros', { params: { liga_id } }).then(r => r.data.arbitros),
+    initialData: [],
+  })
+  const arbitros = arbitrosData || []
+
   const generar = useMutation({
     mutationFn: data => client.post('/jornadas/generar', data),
     onSuccess: () => { qc.invalidateQueries(['jornadas', liga_id]); qc.invalidateQueries(['partidos', liga_id]); setGenModal(false); toast.success('Jornada generada') },
@@ -71,6 +79,12 @@ export default function JornadasPage() {
     mutationFn: jornada_id => client.post('/whatsapp/jornada', { liga_id, jornada_id }),
     onSuccess: res => toast.success(`WhatsApp enviado a ${res.data.enviados} equipos`),
     onError: err => toast.error(err.response?.data?.error || 'Error al enviar'),
+  })
+
+  const asignarArbitro = useMutation({
+    mutationFn: ({ partidoId, arbitro_id }) => client.put(`/partidos/${partidoId}/asignar-arbitro`, { arbitro_id }),
+    onSuccess: () => { qc.invalidateQueries(['partidos', liga_id]); setAssigningArbitro(null); toast.success('Árbitro asignado') },
+    onError: err => toast.error(err.response?.data?.error || 'Error al asignar'),
   })
 
   async function copyLinkArbitro(e, partidoId) {
@@ -168,49 +182,78 @@ export default function JornadasPage() {
                         <p className="text-sm text-center py-4" style={{ color: 'var(--color-fg-muted)' }}>Sin partidos</p>
                       ) : (
                         pjs.map(p => (
-                          <button
-                            key={p._id}
-                            onClick={() => !p.es_bye && setResultadoPartido(p)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${!p.es_bye ? 'hover:bg-white/5 cursor-pointer' : 'cursor-default opacity-60'}`}
-                            style={{ background: 'var(--color-secondary)' }}
-                          >
-                            <div className="flex-1 grid grid-cols-3 items-center gap-2">
-                              <span className="text-sm font-medium text-right truncate" style={{ color: 'var(--color-fg)' }}>
-                                {getEquipoNombre(p.equipo_local_id)}
-                              </span>
-                              <div className="text-center">
-                                {p.estado === 'jugado' || p.estado === 'wo' ? (
-                                  <span className="font-display text-lg" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
-                                    {p.goles_local} – {p.goles_visitante}
-                                  </span>
-                                ) : (
-                                  <div>
-                                    <span className="text-xs block" style={{ color: 'var(--color-fg-muted)' }}>{p.hora || '—'}</span>
-                                    <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{p.cancha || ''}</span>
-                                  </div>
+                          <div key={p._id} className="rounded-xl overflow-hidden" style={{ background: 'var(--color-secondary)' }}>
+                            <button
+                              onClick={() => !p.es_bye && setResultadoPartido(p)}
+                              className={`w-full flex items-center gap-3 px-4 py-3 transition-all text-left ${!p.es_bye ? 'hover:bg-white/5 cursor-pointer' : 'cursor-default opacity-60'}`}
+                            >
+                              <div className="flex-1 grid grid-cols-3 items-center gap-2">
+                                <span className="text-sm font-medium text-right truncate" style={{ color: 'var(--color-fg)' }}>
+                                  {getEquipoNombre(p.equipo_local_id)}
+                                </span>
+                                <div className="text-center">
+                                  {p.estado === 'jugado' || p.estado === 'wo' ? (
+                                    <span className="font-display text-lg" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
+                                      {p.goles_local} – {p.goles_visitante}
+                                    </span>
+                                  ) : (
+                                    <div>
+                                      <span className="text-xs block" style={{ color: 'var(--color-fg-muted)' }}>{p.hora || '—'}</span>
+                                      <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{p.cancha || ''}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-sm font-medium truncate" style={{ color: 'var(--color-fg)' }}>
+                                  {p.es_bye ? 'BYE' : getEquipoNombre(p.equipo_visitante_id)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {p.es_revancha && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>Rev</span>}
+                                {p.es_extra && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7' }}>Extra</span>}
+                                {estadoBadge(p.estado)}
+                                {!p.es_bye && (
+                                  <>
+                                    <button
+                                      onClick={e => { e.stopPropagation(); setAssigningArbitro(assigningArbitro === p._id ? null : p._id) }}
+                                      className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+                                      style={{ color: p.arbitro_id ? 'var(--color-accent)' : 'var(--color-fg-muted)' }}
+                                      title={p.arbitro_id ? `Árbitro: ${p.arbitro_id.nombre}` : 'Asignar árbitro'}
+                                      aria-label="Asignar árbitro"
+                                    >
+                                      <UserCheck size={14} />
+                                    </button>
+                                    <button
+                                      onClick={e => copyLinkArbitro(e, p._id)}
+                                      className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+                                      style={{ color: 'var(--color-fg-muted)' }}
+                                      title="Copiar link de árbitro"
+                                      aria-label="Copiar link de árbitro"
+                                    >
+                                      <Link2 size={14} />
+                                    </button>
+                                  </>
                                 )}
                               </div>
-                              <span className="text-sm font-medium truncate" style={{ color: 'var(--color-fg)' }}>
-                                {p.es_bye ? 'BYE' : getEquipoNombre(p.equipo_visitante_id)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {p.es_revancha && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>Rev</span>}
-                              {p.es_extra && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7' }}>Extra</span>}
-                              {estadoBadge(p.estado)}
-                              {!p.es_bye && (
-                                <button
-                                  onClick={e => copyLinkArbitro(e, p._id)}
-                                  className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
-                                  style={{ color: 'var(--color-fg-muted)' }}
-                                  title="Copiar link de árbitro"
-                                  aria-label="Copiar link de árbitro"
+                            </button>
+
+                            {assigningArbitro === p._id && (
+                              <div className="px-4 pb-3 flex items-center gap-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                                <UserCheck size={14} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+                                <select
+                                  defaultValue={p.arbitro_id?._id || ''}
+                                  onChange={e => asignarArbitro.mutate({ partidoId: p._id, arbitro_id: e.target.value || null })}
+                                  className="flex-1 px-3 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
+                                  style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+                                  onClick={e => e.stopPropagation()}
                                 >
-                                  <Link2 size={14} />
-                                </button>
-                              )}
-                            </div>
-                          </button>
+                                  <option value="">Sin árbitro asignado</option>
+                                  {arbitros.map(a => (
+                                    <option key={a._id} value={a._id}>{a.nombre}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                          </div>
                         ))
                       )}
                     </div>

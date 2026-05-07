@@ -7,7 +7,7 @@ const usuarioSchema = new mongoose.Schema(
     password: { type: String, required: true },
     rol: {
       type: String,
-      enum: ['superadmin', 'admin_liga', 'dueno_equipo', 'vendedor'],
+      enum: ['superadmin', 'admin_liga', 'dueno_equipo', 'vendedor', 'arbitro'],
       required: true,
     },
     username: { type: String, unique: true, sparse: true, lowercase: true, trim: true },

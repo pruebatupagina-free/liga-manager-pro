@@ -26,6 +26,7 @@ export default function LoginPage() {
       if (rol === 'superadmin') navigate('/admin', { replace: true })
       else if (rol === 'dueno_equipo') navigate('/mi-equipo', { replace: true })
       else if (rol === 'vendedor') navigate('/mi-negocio', { replace: true })
+      else if (rol === 'arbitro') navigate('/mis-partidos', { replace: true })
       else navigate(from || '/dashboard', { replace: true })
     } catch (err) {
       toast.error(err.response?.data?.error || 'Credenciales incorrectas')

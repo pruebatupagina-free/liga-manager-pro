@@ -45,6 +45,7 @@ const partidoSchema = new mongoose.Schema(
     },
     notas: { type: String, default: null },
     token_arbitro: { type: String, default: null, index: true, sparse: true },
+    arbitro_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
   },
   { timestamps: { createdAt: 'createdAt', updatedAt: false } }
 )
