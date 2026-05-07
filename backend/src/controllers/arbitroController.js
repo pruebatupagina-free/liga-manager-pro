@@ -24,11 +24,15 @@ async function getPartidoByToken(token) {
     .lean()
 }
 
-// POST /api/partidos/:id/generar-token  (admin only — handled in partidos route)
+// POST /api/partidos/:id/generar-token
 exports.generarToken = async (req, res, next) => {
   try {
     const partido = await Partido.findById(req.params.id)
     if (!partido) return res.status(404).json({ error: 'Partido no encontrado' })
+
+    if (req.user.rol === 'arbitro' && partido.arbitro_id?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Sin acceso a este partido' })
+    }
 
     partido.token_arbitro = crypto.randomBytes(8).toString('hex')
     await partido.save()
