@@ -43,6 +43,8 @@ app.use('/api/mensajes', require('./routes/mensajes'))
 app.use('/api/vendedores', require('./routes/vendedores'))
 app.use('/api/arbitros', require('./routes/arbitros'))
 
+app.use('/api/push', require('./routes/push'))
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date() }))
 
 // Global error handler

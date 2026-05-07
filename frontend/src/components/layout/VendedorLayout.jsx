@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Store, Package, MessageCircle, LogOut, Menu, X, ShoppingBag, Newspaper } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import ThemeToggle from '../ui/ThemeToggle'
+import NotificationBanner from '../ui/NotificationBanner'
 
 const NAV = [
   { to: '/mi-negocio', label: 'Feed', icon: Newspaper, end: true },
@@ -101,6 +102,7 @@ export default function VendedorLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
+          <NotificationBanner />
           <Outlet />
         </main>
       </div>

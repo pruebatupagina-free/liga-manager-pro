@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const { Partido, Gol, Jugador, Jornada, Liga } = require('../models')
 const calcularMVP = require('../utils/calcularMVP')
+const { sendPush } = require('../utils/push')
 
 // GET /api/arbitro/mis-partidos  (auth: arbitro)
 exports.getMisPartidos = async (req, res, next) => {
@@ -86,6 +87,21 @@ exports.guardarResultado = async (req, res, next) => {
     doc.estado = 'jugado'
     doc.mvp_jugador_id = mvpId || null
     await doc.save()
+
+    // Push al admin de la liga (fire-and-forget)
+    ;(async () => {
+      try {
+        const liga = await Liga.findById(doc.liga_id).select('admin_id nombre').lean()
+        if (liga?.admin_id) {
+          await sendPush(liga.admin_id, {
+            title: `Resultado capturado — ${liga.nombre}`,
+            body: `${doc.equipo_local_id} ${goles_local} - ${goles_visitante} ${doc.equipo_visitante_id}`,
+            url: '/liga-manager-pro/dashboard',
+            tag: `resultado-${doc._id}`,
+          })
+        }
+      } catch (_) {}
+    })()
 
     res.json({ ok: true })
   } catch (err) { next(err) }

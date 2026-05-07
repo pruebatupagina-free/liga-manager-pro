@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Outlet, useLocation, matchPath } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import NotificationBanner from '../ui/NotificationBanner'
 import { startTour } from '../../utils/tour'
 
 const LIGA_PATTERNS = [
@@ -37,6 +38,7 @@ export default function DashboardLayout() {
         liga_id={liga_id}
       />
       <main className="flex-1 overflow-y-auto" style={{ background: 'var(--color-bg)' }}>
+        <NotificationBanner />
         <Outlet />
       </main>
     </div>

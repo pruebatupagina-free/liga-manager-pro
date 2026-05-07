@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../hooks/useAuth'
 import client from '../../api/client'
 import ThemeToggle from '../ui/ThemeToggle'
+import NotificationBanner from '../ui/NotificationBanner'
 
 const NAV = [
   { to: '/mi-equipo', label: 'Mi Equipo', icon: Trophy, end: true },
@@ -129,6 +130,7 @@ export default function MiEquipoLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
+          <NotificationBanner />
           <Outlet context={{ equipo, liga, cobros: data?.cobros }} />
         </main>
       </div>

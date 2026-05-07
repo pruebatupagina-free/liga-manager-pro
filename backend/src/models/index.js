@@ -1,4 +1,5 @@
 module.exports = {
+  PushSubscription: require('./PushSubscription'),
   Post: require('./Post'),
   Producto: require('./Producto'),
   Conversacion: require('./Conversacion'),

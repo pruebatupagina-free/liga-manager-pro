@@ -1,4 +1,5 @@
 const { Conversacion, Mensaje, Equipo, Usuario } = require('../models')
+const { sendPush } = require('../utils/push')
 
 // Determine caller type from role
 function tipoFromRol(rol) {
@@ -104,6 +105,28 @@ exports.enviar = async (req, res, next) => {
       fecha_ultimo: new Date(),
       ...unreadUpdate,
     })
+
+    // Push notification al destinatario (fire-and-forget)
+    ;(async () => {
+      try {
+        let recipientId
+        if (tipo === 'equipo') {
+          recipientId = conv.vendedor_id
+        } else {
+          const eq = await Equipo.findById(conv.equipo_id).select('dueno_id nombre').lean()
+          recipientId = eq?.dueno_id
+        }
+        if (recipientId) {
+          const senderName = tipo === 'equipo' ? 'Un equipo' : 'Vendedor'
+          await sendPush(recipientId, {
+            title: `Nuevo mensaje — ${senderName}`,
+            body: texto.trim().slice(0, 80),
+            url: '/liga-manager-pro/mensajes',
+            tag: `mensaje-${conv._id}`,
+          })
+        }
+      } catch (_) {}
+    })()
 
     res.status(201).json({ mensaje, conversacion_id: conv._id })
   } catch (err) { next(err) }
