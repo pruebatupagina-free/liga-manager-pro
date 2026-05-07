@@ -183,7 +183,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* ── Responsive helpers ──────────────────────────────────────────── */}
       <style>{`
@@ -209,10 +209,15 @@ export default function LandingPage() {
           .lp-stats { grid-template-columns: repeat(2, 1fr); }
           .lp-footer-links { gap: 32px; }
         }
+        @media (max-width: 768px) {
+          .lp-nav-links { display: none !important; }
+          .lp-nav { padding: 0 20px !important; }
+          .lp-nav-logo-text { font-size: 17px !important; }
+        }
       `}</style>
 
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <nav style={{
+      <nav className="lp-nav" style={{
         position: 'sticky', top: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 40px', height: 68,
@@ -225,32 +230,34 @@ export default function LandingPage() {
           <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-accent)' }}>
             <Trophy size={17} style={{ color: '#020617' }} />
           </div>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--color-fg)', letterSpacing: '0.05em' }}>
+          <span className="lp-nav-logo-text" style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--color-fg)', letterSpacing: '0.05em' }}>
             LigaManager Pro
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <a href="#features" style={{
-            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-            color: 'var(--color-fg-muted)', textDecoration: 'none',
-          }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-          >Plataforma</a>
-          <a href="#precios" style={{
-            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-            color: 'var(--color-fg-muted)', textDecoration: 'none',
-          }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-          >Precios</a>
-          <Link to="/login" style={{
-            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-            color: 'var(--color-fg-muted)', textDecoration: 'none',
-          }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-          >Iniciar sesión</Link>
+          <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <a href="#features" style={{
+              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+              color: 'var(--color-fg-muted)', textDecoration: 'none',
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+            >Plataforma</a>
+            <a href="#precios" style={{
+              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+              color: 'var(--color-fg-muted)', textDecoration: 'none',
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+            >Precios</a>
+            <Link to="/login" style={{
+              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+              color: 'var(--color-fg-muted)', textDecoration: 'none',
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
+            >Iniciar sesión</Link>
+          </div>
           <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
             padding: '9px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600,
             background: 'var(--color-fg)', color: 'var(--color-bg)', textDecoration: 'none',
