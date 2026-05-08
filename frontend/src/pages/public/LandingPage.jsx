@@ -192,6 +192,7 @@ const CARDS = [
   { icon: BarChart2,     title: 'Estadísticas',           desc: 'Tabla, goleadores y tarjetas actualizados automáticamente con cada resultado.',  img: '/liga-manager-pro/landing/ss-estadisticas.png'  },
   { icon: MessageSquare, title: 'Asistente IA',           desc: 'Pregúntale a la IA sobre tu liga. Quién lidera, quién debe, quién puede ganar.', img: '/liga-manager-pro/landing/ss-chatbot.png'       },
   { icon: Users,         title: 'Equipos y Jugadores',    desc: 'Plantillas completas con foto, número y cuenta propia por equipo.',              img: '/liga-manager-pro/landing/ss-equipos.png'       },
+  { icon: Zap,           title: 'Partidos en Vivo',       desc: 'Los árbitros marcan goles y tarjetas desde el celular. El marcador se actualiza al instante para todos.', img: '/liga-manager-pro/landing/ss-live.png' },
   { icon: Award,         title: 'Liguilla / Playoffs',    desc: 'Genera el bracket de eliminación directa al terminar la fase regular.',          img: '/liga-manager-pro/landing/ss-liguilla.png'      },
   { icon: Globe,         title: 'Página Pública',         desc: 'URL única por liga. Resultados y standings visibles sin crear cuenta.',          img: '/liga-manager-pro/landing/ss-publica.png'       },
   { icon: Newspaper,     title: 'Feed de Noticias',       desc: 'Publica anuncios, resultados destacados y noticias de la liga para todos.',      img: '/liga-manager-pro/landing/ss-feed.png'          },
@@ -283,7 +284,7 @@ export default function LandingPage() {
       <style>{`
         .lp-hero   { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
         .lp-feat   { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-        .lp-cards  { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
+        .lp-cards  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .lp-testi  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .lp-planes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .lp-stats  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
