@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
@@ -8,6 +8,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import Modal from '../components/ui/Modal'
 import { estadoBadge } from '../components/ui/Badge'
+import UpgradeModal from '../components/ui/UpgradeModal'
 import client from '../api/client'
 import { usePlan } from '../hooks/usePlan'
 
@@ -76,6 +77,7 @@ async function compressImage(file, maxDim = 900, quality = 0.82) {
 export default function LigasPage() {
   const qc = useQueryClient()
   const { plan, esBasico, esSuperadmin } = usePlan()
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [shareModal, setShareModal] = useState(null)
   const [galeriaModal, setGaleriaModal] = useState(null)
@@ -263,8 +265,18 @@ export default function LigasPage() {
               El plan básico permite 1 liga activa. Actualiza al plan Pro para crear hasta 5 ligas.
             </p>
           </div>
+          <button
+            onClick={() => setUpgradeOpen(true)}
+            className="text-sm font-semibold px-4 py-1.5 rounded-xl cursor-pointer transition-opacity flex-shrink-0"
+            style={{ background: 'var(--color-accent)', color: '#020617', border: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Mejorar plan
+          </button>
         </div>
       )}
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
 
       {isLoading ? (
         <div className="text-center py-20" style={{ color: 'var(--color-fg-muted)' }}>Cargando...</div>

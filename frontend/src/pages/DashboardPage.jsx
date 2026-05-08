@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Users, Calendar, Trophy, DollarSign, AlertTriangle, Plus } from 'lucide-react'
+import { Users, Calendar, Trophy, DollarSign, AlertTriangle, Plus, Zap } from 'lucide-react'
 import { StatCard } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
+import { usePlan } from '../hooks/usePlan'
 import { startTour } from '../utils/tour'
+import UpgradeModal from '../components/ui/UpgradeModal'
 import client from '../api/client'
 
 function LicenciaBanner({ licencia }) {
@@ -54,6 +56,8 @@ function LicenciaBanner({ licencia }) {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { esBasico } = usePlan()
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   const { data: ligas = [] } = useQuery({
     queryKey: ['ligas'],
@@ -77,6 +81,29 @@ export default function DashboardPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <LicenciaBanner licencia={me?.licencia} />
+
+      {esBasico && (
+        <div
+          className="rounded-2xl px-5 py-3 mb-6 flex items-center gap-3"
+          style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)' }}
+        >
+          <Zap size={16} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+          <p className="text-sm flex-1" style={{ color: 'var(--color-fg-muted)' }}>
+            Estás en el <strong style={{ color: 'var(--color-fg)' }}>Plan Gratis</strong> — 1 liga, 10 equipos.
+          </p>
+          <button
+            onClick={() => setUpgradeOpen(true)}
+            className="text-sm font-semibold px-4 py-1.5 rounded-xl cursor-pointer transition-opacity"
+            style={{ background: 'var(--color-accent)', color: '#020617', border: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Mejorar plan
+          </button>
+        </div>
+      )}
+
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8" data-tour="dashboard">
