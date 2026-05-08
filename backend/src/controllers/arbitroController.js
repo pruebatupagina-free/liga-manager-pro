@@ -185,12 +185,12 @@ exports.finalizarPartido = async (req, res, next) => {
       Jugador.find({ equipo_id: doc.equipo_visitante_id }).select('_id').lean(),
     ])
 
-    const mvpId = mvp_jugador_id || calcularMVP(
-      doc.toObject(),
-      golDocs,
-      jugLocal.map(j => j._id),
-      jugVisit.map(j => j._id)
-    )
+    let mvpId = mvp_jugador_id
+    if (!mvpId) {
+      try {
+        mvpId = calcularMVP(doc.toObject(), golDocs, jugLocal.map(j => j._id), jugVisit.map(j => j._id))
+      } catch (_) {}
+    }
 
     doc.estado = 'jugado'
     doc.mvp_jugador_id = mvpId || null
