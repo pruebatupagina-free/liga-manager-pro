@@ -174,7 +174,7 @@ const PLANES = [
     cta: 'Empezar gratis',
   },
   {
-    nombre: 'Pro', precio: '$499', periodo: '/mes', accent: true, badge: 'Más popular',
+    nombre: 'Pro', precio: '$499', periodo: '/mes', accent: false, badge: null,
     desc: 'Para ligas serias',
     features: [
       'Hasta 5 ligas activas',
@@ -188,14 +188,29 @@ const PLANES = [
     cta: 'Comenzar Pro',
   },
   {
+    nombre: 'Club', precio: '$699', periodo: '/mes', accent: true, badge: 'Más popular',
+    desc: 'Para organizadores con múltiples ligas',
+    features: [
+      'Hasta 15 ligas activas',
+      'Equipos y jugadores ilimitados',
+      'Asistente IA con contexto de tu liga',
+      'Marketplace de vendedores',
+      'Clonar ligas',
+      'Galería de fotos (50 imágenes)',
+      'Soporte prioritario',
+    ],
+    cta: 'Comenzar Club',
+  },
+  {
     nombre: 'Elite', precio: '$999', periodo: '/mes', accent: false, badge: null,
     desc: 'Para organizadores de alto volumen',
     features: [
       'Ligas ilimitadas',
-      'Todo lo del plan Pro',
+      'Todo lo del plan Club',
       'Multi-admin por liga',
+      'Galería ilimitada',
       'Onboarding dedicado',
-      'Soporte prioritario',
+      'SLA garantizado',
     ],
     cta: 'Contactar',
   },
@@ -219,7 +234,7 @@ export default function LandingPage() {
         .lp-feat   { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
         .lp-cards  { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
         .lp-testi  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .lp-planes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .lp-planes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .lp-stats  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
         .lp-footer-cols { display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
         .lp-footer-links { display: flex; gap: 64px; flex-wrap: wrap; }
@@ -227,14 +242,15 @@ export default function LandingPage() {
           .lp-hero  { grid-template-columns: 1fr; }
           .lp-feat  { grid-template-columns: 1fr; gap: 40px; }
           .lp-feat-img-flip { order: -1 !important; }
-          .lp-planes{ grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+          .lp-planes{ grid-template-columns: repeat(2, 1fr); max-width: 900px; margin: 0 auto; }
           .lp-testi { grid-template-columns: repeat(2, 1fr); }
           .lp-stats { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 640px) {
-          .lp-cards { grid-template-columns: 1fr; }
-          .lp-testi { grid-template-columns: 1fr; }
-          .lp-stats { grid-template-columns: repeat(2, 1fr); }
+          .lp-cards  { grid-template-columns: 1fr; }
+          .lp-testi  { grid-template-columns: 1fr; }
+          .lp-stats  { grid-template-columns: repeat(2, 1fr); }
+          .lp-planes { grid-template-columns: 1fr; max-width: 440px; }
           .lp-footer-links { gap: 32px; }
         }
         @media (max-width: 768px) {

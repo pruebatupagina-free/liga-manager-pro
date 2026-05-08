@@ -22,7 +22,7 @@ const usuarioSchema = new mongoose.Schema(
     },
     ligas_asignadas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Liga' }],
     licencia: {
-      plan: { type: String, enum: ['basico', 'pro', 'elite'], default: 'basico' },
+      plan: { type: String, enum: ['basico', 'pro', 'club', 'elite'], default: 'basico' },
       estado: {
         type: String,
         enum: ['activa', 'por_vencer', 'vencida', 'suspendida'],
