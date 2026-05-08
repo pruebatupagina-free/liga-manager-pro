@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const golSchema = new mongoose.Schema(
   {
     partido_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Partido', required: true },
-    jugador_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Jugador', required: true },
+    jugador_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Jugador', default: null },
     equipo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipo', required: true },
     minuto: { type: Number, default: null },
     tipo: {
