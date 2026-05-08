@@ -4,6 +4,7 @@ import {
   Trophy, Calendar, DollarSign, BarChart2, MessageSquare,
   Check, Zap, ChevronRight, Star, ArrowRight,
   Users, Award, ShoppingBag, Newspaper, ClipboardList, Globe,
+  ChevronDown, Shield, UserCircle, Store,
 } from 'lucide-react'
 
 const WA_URL = 'https://wa.me/528139863634?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20LigaManager%20Pro%20%F0%9F%8F%86'
@@ -268,6 +269,7 @@ const PLANES = [
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+  const [activeMenu, setActiveMenu] = useState(null)
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 24)
     window.addEventListener('scroll', fn, { passive: true })
@@ -330,28 +332,148 @@ export default function LandingPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <a href="#features" style={{
-              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-              color: 'var(--color-fg-muted)', textDecoration: 'none',
-            }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-            >Plataforma</a>
-            <a href="#precios" style={{
-              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-              color: 'var(--color-fg-muted)', textDecoration: 'none',
-            }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-            >Precios</a>
+
+            {/* ── Plataforma dropdown ── */}
+            <div style={{ position: 'relative' }}
+              onMouseEnter={() => setActiveMenu('plataforma')}
+              onMouseLeave={() => setActiveMenu(null)}
+            >
+              <button style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                color: activeMenu === 'plataforma' ? 'var(--color-fg)' : 'var(--color-fg-muted)',
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}>
+                Plataforma <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: activeMenu === 'plataforma' ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+              </button>
+              {activeMenu === 'plataforma' && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+                  width: 520, background: 'var(--color-primary)',
+                  border: '1px solid var(--color-border)', borderRadius: 16,
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.18)', padding: 16, zIndex: 200,
+                }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 4 }}>Módulos</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                    {CARDS.map(({ icon: Icon, title, desc }) => (
+                      <a key={title} href="#features" onClick={() => setActiveMenu(null)} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 10,
+                        padding: '10px 12px', borderRadius: 10, textDecoration: 'none',
+                        transition: 'background 0.15s',
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(34,197,94,0.12)', marginTop: 1 }}>
+                          <Icon size={14} style={{ color: 'var(--color-accent)' }} />
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-fg)', marginBottom: 2 }}>{title}</p>
+                          <p style={{ fontSize: 12, color: 'var(--color-fg-muted)', lineHeight: 1.4 }}>{desc}</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Precios dropdown ── */}
+            <div style={{ position: 'relative' }}
+              onMouseEnter={() => setActiveMenu('precios')}
+              onMouseLeave={() => setActiveMenu(null)}
+            >
+              <button style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                color: activeMenu === 'precios' ? 'var(--color-fg)' : 'var(--color-fg-muted)',
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}>
+                Precios <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: activeMenu === 'precios' ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+              </button>
+              {activeMenu === 'precios' && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+                  width: 240, background: 'var(--color-primary)',
+                  border: '1px solid var(--color-border)', borderRadius: 16,
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.18)', padding: 10, zIndex: 200,
+                }}>
+                  {[
+                    { nombre: 'Gratis', precio: '$0', badge: null },
+                    { nombre: 'Pro', precio: '$499/mes', badge: null },
+                    { nombre: 'Club', precio: '$699/mes', badge: 'Popular' },
+                    { nombre: 'Elite', precio: '$999/mes', badge: null },
+                  ].map(p => (
+                    <a key={p.nombre} href="#precios" onClick={() => setActiveMenu(null)} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px', borderRadius: 10, textDecoration: 'none',
+                      transition: 'background 0.15s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-fg)' }}>{p.nombre}</span>
+                        {p.badge && (
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(34,197,94,0.15)', color: 'var(--color-accent)' }}>{p.badge}</span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-fg-muted)' }}>{p.precio}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <Link to="/login" style={{
-            padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-            color: 'var(--color-fg-muted)', textDecoration: 'none',
-          }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-fg)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-fg-muted)'}
-          >Iniciar sesión</Link>
+
+          {/* ── Iniciar sesión dropdown ── */}
+          <div style={{ position: 'relative' }}
+            onMouseEnter={() => setActiveMenu('login')}
+            onMouseLeave={() => setActiveMenu(null)}
+          >
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '8px 16px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+              color: activeMenu === 'login' ? 'var(--color-fg)' : 'var(--color-fg-muted)',
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}>
+              Iniciar sesión <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: activeMenu === 'login' ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+            </button>
+            {activeMenu === 'login' && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                width: 220, background: 'var(--color-primary)',
+                border: '1px solid var(--color-border)', borderRadius: 16,
+                boxShadow: '0 20px 60px rgba(0,0,0,0.18)', padding: 10, zIndex: 200,
+              }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-fg-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 14px 8px' }}>Acceder como</p>
+                {[
+                  { icon: Trophy,      label: 'Admin de Liga',     desc: 'Gestiona tu torneo' },
+                  { icon: UserCircle,  label: 'Dueño de Equipo',   desc: 'Ve tu plantilla' },
+                  { icon: Store,       label: 'Vendedor',           desc: 'Administra tu negocio' },
+                  { icon: Shield,      label: 'Árbitro',            desc: 'Tus partidos asignados' },
+                ].map(({ icon: Icon, label, desc }) => (
+                  <Link key={label} to="/login" onClick={() => setActiveMenu(null)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 14px', borderRadius: 10, textDecoration: 'none',
+                    transition: 'background 0.15s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-secondary)' }}>
+                      <Icon size={14} style={{ color: 'var(--color-fg-muted)' }} />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-fg)', marginBottom: 1 }}>{label}</p>
+                      <p style={{ fontSize: 11, color: 'var(--color-fg-muted)' }}>{desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
           <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
             padding: '9px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600,
             background: 'var(--color-fg)', color: 'var(--color-bg)', textDecoration: 'none',
