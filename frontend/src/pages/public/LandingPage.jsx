@@ -160,16 +160,44 @@ const TESTIMONIALS = [
 
 const PLANES = [
   {
-    nombre: 'Básico', precio: '$299', periodo: '/mes', accent: false,
-    features: ['1 liga activa', 'Hasta 16 equipos', 'Estadísticas básicas', 'Página pública', 'Soporte por email'],
+    nombre: 'Gratis', precio: '$0', periodo: ' para siempre', accent: false, badge: null,
+    desc: 'Para empezar sin riesgo',
+    features: [
+      '1 liga activa',
+      'Hasta 10 equipos por liga',
+      'Hasta 15 jugadores por equipo',
+      'Live scoring en tiempo real',
+      'Árbitros y liguilla incluidos',
+      'Página pública de la liga',
+      'Estadísticas y tabla de posiciones',
+    ],
+    cta: 'Empezar gratis',
   },
   {
-    nombre: 'Profesional', precio: '$599', periodo: '/mes', accent: true,
-    features: ['Ligas ilimitadas', 'Equipos ilimitados', 'Asistente IA', 'Export PDF & Excel', 'WhatsApp automático', 'Liguilla/Playoffs', 'Soporte prioritario'],
+    nombre: 'Pro', precio: '$499', periodo: '/mes', accent: true, badge: 'Más popular',
+    desc: 'Para ligas serias',
+    features: [
+      'Hasta 5 ligas activas',
+      'Equipos y jugadores ilimitados',
+      'Asistente IA con contexto de tu liga',
+      'Marketplace de vendedores',
+      'Mensajería equipo ↔ vendedor',
+      'Clonar ligas',
+      'Galería de fotos (20 imágenes)',
+    ],
+    cta: 'Comenzar Pro',
   },
   {
-    nombre: 'Ilimitado', precio: '$999', periodo: '/mes', accent: false,
-    features: ['Todo lo anterior', 'Multi-admin', 'API acceso', 'Onboarding dedicado', 'SLA 99.9%'],
+    nombre: 'Elite', precio: '$999', periodo: '/mes', accent: false, badge: null,
+    desc: 'Para organizadores de alto volumen',
+    features: [
+      'Ligas ilimitadas',
+      'Todo lo del plan Pro',
+      'Multi-admin por liga',
+      'Onboarding dedicado',
+      'Soporte prioritario',
+    ],
+    cta: 'Contactar',
   },
 ]
 
@@ -552,27 +580,28 @@ export default function LandingPage() {
               <FadeIn key={plan.nombre} delay={i * 80}>
                 <div style={{
                   borderRadius: 20, padding: '36px 32px', display: 'flex', flexDirection: 'column',
-                  position: 'relative',
+                  position: 'relative', height: '100%',
                   border: plan.accent ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
                   background: plan.accent ? 'var(--gradient-featured)' : 'var(--color-primary)',
                   boxShadow: plan.accent ? '0 0 48px rgba(34,197,94,0.14)' : undefined,
                 }}>
-                  {plan.accent && (
+                  {plan.badge && (
                     <span style={{
                       position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
                       background: 'var(--color-accent)', color: '#020617',
                       fontSize: 12, fontWeight: 700, padding: '4px 14px', borderRadius: 100, whiteSpace: 'nowrap',
-                    }}>Más popular</span>
+                    }}>{plan.badge}</span>
                   )}
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--color-fg)', marginBottom: 4 }}>{plan.nombre}</h3>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--color-fg)', marginBottom: 2 }}>{plan.nombre}</h3>
+                  <p style={{ fontSize: 13, color: 'var(--color-fg-muted)', marginBottom: 16 }}>{plan.desc}</p>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 28 }}>
                     <span style={{ fontFamily: 'var(--font-display)', fontSize: 50, color: 'var(--color-fg)' }}>{plan.precio}</span>
                     <span style={{ fontSize: 14, color: 'var(--color-fg-muted)' }}>{plan.periodo}</span>
                   </div>
                   <ul style={{ listStyle: 'none', flex: 1, marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {plan.features.map(f => (
-                      <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--color-fg)' }}>
-                        <Check size={14} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+                      <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: 'var(--color-fg)' }}>
+                        <Check size={14} style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: 2 }} />
                         {f}
                       </li>
                     ))}
@@ -586,7 +615,7 @@ export default function LandingPage() {
                   }}
                     onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
                     onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                  >Comenzar</a>
+                  >{plan.cta}</a>
                 </div>
               </FadeIn>
             ))}
