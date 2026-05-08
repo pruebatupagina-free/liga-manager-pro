@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
 const { Usuario } = require('../models')
-const { sendPasswordReset } = require('../utils/email')
+const { sendPasswordReset, sendWelcome } = require('../utils/email')
 
 const RESERVED = ['login', 'dashboard', 'admin', 'api', 'ligas', 'equipos', 'usuarios', 'solicitudes']
 
@@ -31,6 +31,50 @@ exports.login = async (req, res, next) => {
 
     const token = signToken(user)
     res.json({ token, user: safeUser(user) })
+  } catch (err) { next(err) }
+}
+
+// POST /api/auth/register-public — registro público, crea admin_liga con plan basico
+exports.registerPublic = async (req, res, next) => {
+  try {
+    const { nombre, email, password } = req.body
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: 'nombre, email y contraseña son requeridos' })
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
+    }
+
+    const exists = await Usuario.findOne({ email: email.toLowerCase() })
+    if (exists) return res.status(409).json({ error: 'Ya existe una cuenta con ese email' })
+
+    // Username desde email: parte antes del @, solo alfanumérico+guion bajo, max 20 chars
+    let base = email.toLowerCase().split('@')[0].replace(/[^a-z0-9_]/g, '').slice(0, 20)
+    if (!base) base = 'user'
+    if (RESERVED.includes(base)) base = `${base}1`
+    let username = base
+    let suffix = 1
+    while (await Usuario.findOne({ username })) {
+      username = `${base}${suffix++}`
+    }
+
+    const hash = await bcrypt.hash(password, 12)
+    const user = await Usuario.create({
+      nombre: nombre.trim(),
+      email: email.toLowerCase(),
+      password: hash,
+      rol: 'admin_liga',
+      username,
+      licencia: { plan: 'basico', estado: 'activa', fecha_inicio: new Date() },
+    })
+
+    const token = signToken(user)
+    res.status(201).json({ token, user: safeUser(user) })
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://pruebatupagina-free.github.io/liga-manager-pro'
+    sendWelcome(user.email, user.nombre, `${frontendUrl}/dashboard`).catch(err =>
+      console.error('Welcome email failed:', err)
+    )
   } catch (err) { next(err) }
 }
 

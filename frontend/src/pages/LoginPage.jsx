@@ -140,6 +140,12 @@ export default function LoginPage() {
           >
             ¿Olvidaste tu contraseña?
           </Link>
+          <p className="text-center text-xs pt-2" style={{ color: 'var(--color-fg-muted)' }}>
+            ¿No tienes cuenta?{' '}
+            <Link to="/register" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
+              Crear cuenta gratis
+            </Link>
+          </p>
         </form>
 
         <p className="text-center text-xs mt-6" style={{ color: 'var(--color-fg-muted)' }}>

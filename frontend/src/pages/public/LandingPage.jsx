@@ -475,14 +475,14 @@ export default function LandingPage() {
             )}
           </div>
 
-          <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+          <Link to="/register" style={{
             padding: '9px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600,
             background: 'var(--color-fg)', color: 'var(--color-bg)', textDecoration: 'none',
             transition: 'opacity 0.15s',
           }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.82'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >Comenzar gratis</a>
+          >Comenzar gratis</Link>
         </div>
       </nav>
 
@@ -510,7 +510,7 @@ export default function LandingPage() {
               Jornadas automáticas, cobros, estadísticas y asistente IA. Todo lo que necesitas para organizar tu liga desde un solo lugar.
             </p>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 36 }}>
-              <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+              <Link to="/register" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '13px 26px', borderRadius: 14, fontSize: 15, fontWeight: 600,
                 background: 'var(--color-accent)', color: '#020617', textDecoration: 'none',
@@ -520,7 +520,7 @@ export default function LandingPage() {
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
                 Comenzar gratis <ChevronRight size={16} />
-              </a>
+              </Link>
               <a href="#features" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '13px 26px', borderRadius: 14, fontSize: 15, fontWeight: 500,
@@ -606,7 +606,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+                <Link to="/register" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '11px 22px', borderRadius: 12, fontSize: 14, fontWeight: 600,
                   background: 'var(--color-accent)', color: '#020617', textDecoration: 'none',
@@ -616,7 +616,7 @@ export default function LandingPage() {
                   onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
                   Conoce más <ArrowRight size={14} />
-                </a>
+                </Link>
               </FadeIn>
               <FadeIn delay={120} className={flip ? 'lp-feat-img-flip' : ''} style={{ order: flip ? 0 : 1 }}>
                 <BrowserMockup src={img} />
@@ -640,7 +640,7 @@ export default function LandingPage() {
               </h2>
               <p style={{ fontSize: 16, color: 'rgba(2,6,23,0.72)' }}>Prueba gratis. Sin tarjeta de crédito. Cancela cuando quieras.</p>
             </div>
-            <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+            <Link to="/register" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
               padding: '14px 28px', borderRadius: 14, fontSize: 15, fontWeight: 700,
               background: '#020617', color: '#fff', textDecoration: 'none',
@@ -650,7 +650,7 @@ export default function LandingPage() {
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               Comenzar gratis <ChevronRight size={16} />
-            </a>
+            </Link>
           </div>
         </FadeIn>
       </section>
@@ -796,16 +796,28 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
-                    display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12,
-                    fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                    background: plan.accent ? 'var(--color-accent)' : 'var(--color-secondary)',
-                    color: plan.accent ? '#020617' : 'var(--color-fg)',
-                    transition: 'opacity 0.15s',
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                  >{plan.cta}</a>
+                  {plan.nombre === 'Elite' ? (
+                    <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+                      display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12,
+                      fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                      background: 'var(--color-secondary)', color: 'var(--color-fg)',
+                      transition: 'opacity 0.15s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                    >{plan.cta}</a>
+                  ) : (
+                    <Link to="/register" style={{
+                      display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12,
+                      fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                      background: plan.accent ? 'var(--color-accent)' : 'var(--color-secondary)',
+                      color: plan.accent ? '#020617' : 'var(--color-fg)',
+                      transition: 'opacity 0.15s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                    >{plan.cta}</Link>
+                  )}
                 </div>
               </FadeIn>
             ))}
@@ -827,7 +839,7 @@ export default function LandingPage() {
               </h2>
               <p style={{ fontSize: 15, color: 'rgba(2,6,23,0.7)' }}>Únete a +500 organizadores. Empieza hoy mismo, sin costo.</p>
             </div>
-            <a href={WA_URL} target="_blank" rel="noopener noreferrer" style={{
+            <Link to="/register" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
               padding: '14px 28px', borderRadius: 14, fontSize: 15, fontWeight: 700,
               background: '#020617', color: '#fff', textDecoration: 'none',
@@ -837,7 +849,7 @@ export default function LandingPage() {
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               Comenzar gratis <ChevronRight size={16} />
-            </a>
+            </Link>
           </div>
         </FadeIn>
       </section>
