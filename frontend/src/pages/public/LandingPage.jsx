@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Trophy, Calendar, DollarSign, BarChart2, MessageSquare,
   Check, Zap, ChevronRight, Star, ArrowRight,
+  Users, Award, ShoppingBag, Newspaper, ClipboardList, Globe,
 } from 'lucide-react'
 
 const WA_URL = 'https://wa.me/528139863634?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20LigaManager%20Pro%20%F0%9F%8F%86'
@@ -99,28 +100,28 @@ const STATS = [
 
 const FEATURES = [
   {
-    tag: 'Jornadas y Calendario',
-    title: 'Gestión para',
-    bold: 'Ligas y Torneos.',
-    desc: 'Todo lo necesario para llevar tu torneo de manera organizada y profesional.',
+    tag: 'Jornadas y Live Scoring',
+    title: 'Calendarios y partidos',
+    bold: 'en tiempo real.',
+    desc: 'Genera el calendario completo en segundos y deja que los árbitros marquen goles desde su celular mientras el torneo avanza.',
     bullets: [
-      'Genera jornadas Round Robin en segundos',
-      'Resultados en tiempo real desde el celular',
-      'Estadísticas y tabla de posiciones automática',
-      'Canchas, horarios y días personalizables',
+      'Round Robin automático con canchas y horarios',
+      'Árbitros marcan goles y tarjetas en vivo',
+      'Score visible al público sin necesidad de login',
+      'Badge EN VIVO pulsante en la página pública',
     ],
     img: '/liga-manager-pro/landing/ss-jornadas.png',
     flip: false,
   },
   {
     tag: 'Finanzas',
-    title: 'Control de',
-    bold: 'cobros.',
-    desc: 'Lleva el control de inscripciones, pagos y pendientes sin complicaciones.',
+    title: 'Cobros sin',
+    bold: 'perseguir a nadie.',
+    desc: 'Registra inscripciones, arbitrajes y pagos. Ve al instante quién debe y cuánto sin andar mandando mensajes.',
     bullets: [
-      'Cobra inscripciones por equipo o jugador',
-      'Registra pagos de arbitraje por jornada',
-      'Ve quién debe y cuánto al instante',
+      'Inscripciones por equipo o jugador',
+      'Arbitraje por jornada con estado de pago',
+      'Semáforo de deuda por equipo al instante',
       'Exporta reportes en PDF y Excel',
     ],
     img: '/liga-manager-pro/landing/ss-cobros.png',
@@ -128,25 +129,73 @@ const FEATURES = [
   },
   {
     tag: 'Estadísticas',
-    title: 'Datos y',
-    bold: 'rendimiento.',
-    desc: 'Tabla de posiciones, goleadores y comparativas. Todo actualizado al momento.',
+    title: 'Tabla y goleadores',
+    bold: 'siempre actualizados.',
+    desc: 'Posiciones, goleadores y tarjetas se calculan solos al registrar cada resultado.',
     bullets: [
-      'Tabla de posiciones en tiempo real',
-      'Ranking de goleadores por liga',
-      'Análisis de rendimiento por equipo',
-      'Página pública para que todos la vean',
+      'Tabla de posiciones automática',
+      'Ranking de goleadores con fotos',
+      'Tarjetas amarillas y rojas acumuladas',
+      'Comparativa de rendimiento entre equipos',
     ],
     img: '/liga-manager-pro/landing/ss-estadisticas.png',
     flip: false,
   },
+  {
+    tag: 'Equipos y Jugadores',
+    title: 'Plantillas completas',
+    bold: 'bajo control.',
+    desc: 'Administra todos los equipos y sus plantillas. Cada equipo tiene su propio acceso para ver su información.',
+    bullets: [
+      'Alta y edición de equipos con logo',
+      'Registro de jugadores con foto y número',
+      'Cuenta propia para cada dueño de equipo',
+      'Vista de mi equipo para capitanes',
+    ],
+    img: '/liga-manager-pro/landing/ss-equipos.png',
+    flip: true,
+  },
+  {
+    tag: 'Página Pública',
+    title: 'Tu liga, visible',
+    bold: 'para todos.',
+    desc: 'Cada liga tiene su propia URL pública. Jugadores, familiares y aficionados ven resultados sin necesidad de cuenta.',
+    bullets: [
+      'URL única por liga compartible en WhatsApp',
+      'Tabla, jornadas y goleadores en tiempo real',
+      'Partidos en vivo con score actualizado',
+      'Liguilla / playoffs visible al público',
+    ],
+    img: '/liga-manager-pro/landing/ss-publica.png',
+    flip: false,
+  },
+  {
+    tag: 'Marketplace',
+    title: 'Proveedores directos',
+    bold: 'en tu liga.',
+    desc: 'Conecta a equipos con vendedores de uniformes, balones y equipamiento. Mensajería directa incluida.',
+    bullets: [
+      'Vendedores asignados por liga',
+      'Catálogo de productos con precios',
+      'Mensajería equipo ↔ vendedor integrada',
+      'Pedidos y cotizaciones sin salir de la app',
+    ],
+    img: '/liga-manager-pro/landing/ss-marketplace.png',
+    flip: true,
+  },
 ]
 
 const CARDS = [
-  { icon: Calendar,      title: 'Jornadas automáticas', desc: 'Round Robin inteligente con respeto a horas y canchas fijas.',               img: '/liga-manager-pro/landing/ss-jornadas.png'    },
-  { icon: DollarSign,    title: 'Control de cobros',     desc: 'Inscripciones, arbitrajes y pagos. Todo organizado por equipo.',            img: '/liga-manager-pro/landing/ss-cobros.png'      },
-  { icon: BarChart2,     title: 'Estadísticas',          desc: 'Tabla, goleadores y rendimiento actualizados al instante.',                 img: '/liga-manager-pro/landing/ss-estadisticas.png' },
-  { icon: MessageSquare, title: 'Asistente IA',          desc: 'Pregúntale a Claude AI sobre tu liga. 30 consultas por día incluidas.',     img: '/liga-manager-pro/landing/ss-chatbot.png'     },
+  { icon: Calendar,      title: 'Jornadas automáticas',  desc: 'Round Robin con canchas, días y horarios personalizables en segundos.',         img: '/liga-manager-pro/landing/ss-jornadas.png'      },
+  { icon: DollarSign,    title: 'Control de cobros',      desc: 'Inscripciones, arbitrajes y pagos organizados por equipo sin complicaciones.',   img: '/liga-manager-pro/landing/ss-cobros.png'        },
+  { icon: BarChart2,     title: 'Estadísticas',           desc: 'Tabla, goleadores y tarjetas actualizados automáticamente con cada resultado.',  img: '/liga-manager-pro/landing/ss-estadisticas.png'  },
+  { icon: MessageSquare, title: 'Asistente IA',           desc: 'Pregúntale a la IA sobre tu liga. Quién lidera, quién debe, quién puede ganar.', img: '/liga-manager-pro/landing/ss-chatbot.png'       },
+  { icon: Users,         title: 'Equipos y Jugadores',    desc: 'Plantillas completas con foto, número y cuenta propia por equipo.',              img: '/liga-manager-pro/landing/ss-equipos.png'       },
+  { icon: Award,         title: 'Liguilla / Playoffs',    desc: 'Genera el bracket de eliminación directa al terminar la fase regular.',          img: '/liga-manager-pro/landing/ss-liguilla.png'      },
+  { icon: Globe,         title: 'Página Pública',         desc: 'URL única por liga. Resultados y standings visibles sin crear cuenta.',          img: '/liga-manager-pro/landing/ss-publica.png'       },
+  { icon: Newspaper,     title: 'Feed de Noticias',       desc: 'Publica anuncios, resultados destacados y noticias de la liga para todos.',      img: '/liga-manager-pro/landing/ss-feed.png'          },
+  { icon: ClipboardList, title: 'Inscripciones',          desc: 'Gestiona solicitudes de registro de equipos y jugadores con control total.',     img: '/liga-manager-pro/landing/ss-inscripciones.png' },
+  { icon: ShoppingBag,   title: 'Marketplace',            desc: 'Proveedores de uniformes y equipamiento conectados directamente con tu liga.',   img: '/liga-manager-pro/landing/ss-marketplace.png'   },
 ]
 
 const TESTIMONIALS = [
@@ -232,7 +281,7 @@ export default function LandingPage() {
       <style>{`
         .lp-hero   { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
         .lp-feat   { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-        .lp-cards  { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .lp-cards  { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
         .lp-testi  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .lp-planes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .lp-stats  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
@@ -242,6 +291,7 @@ export default function LandingPage() {
           .lp-hero  { grid-template-columns: 1fr; }
           .lp-feat  { grid-template-columns: 1fr; gap: 40px; }
           .lp-feat-img-flip { order: -1 !important; }
+          .lp-cards  { grid-template-columns: repeat(2, 1fr); }
           .lp-planes{ grid-template-columns: repeat(2, 1fr); max-width: 900px; margin: 0 auto; }
           .lp-testi { grid-template-columns: repeat(2, 1fr); }
           .lp-stats { grid-template-columns: repeat(2, 1fr); }
@@ -498,28 +548,29 @@ export default function LandingPage() {
           </FadeIn>
           <div className="lp-cards">
             {CARDS.map(({ icon: Icon, title, desc, img }, i) => (
-              <FadeIn key={title} delay={i * 80}>
+              <FadeIn key={title} delay={i * 60}>
                 <div style={{
-                  borderRadius: 20, overflow: 'hidden',
+                  borderRadius: 16, overflow: 'hidden',
                   border: '1px solid var(--color-border)',
                   background: 'var(--color-primary)',
                   transition: 'transform 0.22s ease, box-shadow 0.22s ease',
+                  display: 'flex', flexDirection: 'column',
                 }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 20px 56px rgba(0,0,0,0.12)' }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.14)' }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
                 >
-                  <div style={{ height: 220, overflow: 'hidden', background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+                  <div style={{ height: 160, overflow: 'hidden', background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
                     <img src={img} alt={title} style={{ width: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                   </div>
-                  <div style={{ padding: '20px 24px 26px' }}>
+                  <div style={{ padding: '16px 18px 20px', flex: 1 }}>
                     <div style={{
-                      width: 36, height: 36, borderRadius: 10, marginBottom: 12,
+                      width: 32, height: 32, borderRadius: 9, marginBottom: 10,
                       background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Icon size={18} style={{ color: 'var(--color-accent)' }} />
+                      <Icon size={16} style={{ color: 'var(--color-accent)' }} />
                     </div>
-                    <h3 style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-fg)', marginBottom: 6 }}>{title}</h3>
-                    <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', lineHeight: 1.6 }}>{desc}</p>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-fg)', marginBottom: 5 }}>{title}</h3>
+                    <p style={{ fontSize: 12, color: 'var(--color-fg-muted)', lineHeight: 1.55 }}>{desc}</p>
                   </div>
                 </div>
               </FadeIn>
