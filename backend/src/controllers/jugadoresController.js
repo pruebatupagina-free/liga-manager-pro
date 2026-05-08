@@ -36,9 +36,19 @@ exports.create = [
       const { ok, equipo } = await puedeGestionar(equipo_id, req.user)
       if (!ok) return res.status(403).json({ error: 'Sin acceso' })
 
-      // Máximo 30 jugadores activos
+      const limiteJugadores = (req.plan && req.plan.max_jugadores !== Infinity) ? req.plan.max_jugadores : 30
       const activos = await Jugador.countDocuments({ equipo_id, activo: true })
-      if (activos >= 30) return res.status(400).json({ error: 'Máximo 30 jugadores activos por equipo' })
+      if (activos >= limiteJugadores) {
+        const esPlanLimitado = req.plan && req.plan.max_jugadores !== Infinity
+        return res.status(400).json({
+          error: esPlanLimitado
+            ? `Tu plan ${req.planNombre} permite máximo ${limiteJugadores} jugadores activos por equipo. Actualiza tu plan para agregar más.`
+            : 'Máximo 30 jugadores activos por equipo',
+          codigo: esPlanLimitado ? 'LIMITE_JUGADORES' : undefined,
+          plan: req.planNombre,
+          limite: limiteJugadores,
+        })
+      }
 
       // Número de camiseta único por equipo
       if (numero_camiseta) {

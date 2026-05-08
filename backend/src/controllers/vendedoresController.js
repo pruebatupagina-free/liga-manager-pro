@@ -37,6 +37,14 @@ exports.listar = async (req, res, next) => {
 // POST /api/vendedores
 exports.crear = async (req, res, next) => {
   try {
+    if (req.user.rol !== 'superadmin' && req.plan && !req.plan.puede_marketplace) {
+      return res.status(403).json({
+        error: 'El Marketplace no está disponible en el plan básico. Actualiza tu plan para agregar vendedores.',
+        codigo: 'LIMITE_PLAN',
+        plan: req.planNombre,
+      })
+    }
+
     const { nombre, email, password, negocio, ligas_asignadas } = req.body
     if (!nombre || !email || !password) {
       return res.status(400).json({ error: 'nombre, email y password requeridos' })

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Send, MessageSquare, Loader2 } from 'lucide-react'
+import { Send, MessageSquare, Loader2, Zap, Lock } from 'lucide-react'
 import client from '../api/client'
+import { usePlan } from '../hooks/usePlan'
 
 const QUICK_PROMPTS = [
   '¿Cómo va mi liga?',
@@ -12,6 +13,7 @@ const QUICK_PROMPTS = [
 ]
 
 export default function ChatbotPage() {
+  const { esBasico, plan } = usePlan()
   const [ligaId, setLigaId] = useState('')
   const [input, setInput] = useState('')
   const [historial, setHistorial] = useState([])
@@ -56,6 +58,42 @@ export default function ChatbotPage() {
   }
 
   const agotado = mensajeshoy >= 30
+
+  if (esBasico) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center" data-tour="chatbot">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+          style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)' }}
+        >
+          <Lock size={28} style={{ color: '#FBBF24' }} />
+        </div>
+        <h2 className="font-display text-2xl mb-2" style={{ color: 'var(--color-fg)' }}>Asistente IA</h2>
+        <p className="text-sm mb-1" style={{ color: 'var(--color-fg-muted)' }}>
+          El Asistente IA con contexto de tu liga no está disponible en el plan básico.
+        </p>
+        <p className="text-xs mb-6" style={{ color: 'var(--color-fg-muted)', opacity: 0.7 }}>
+          Actualiza al plan Pro para hacer preguntas sobre resultados, deudas, standings y más.
+        </p>
+        <div
+          className="rounded-2xl p-5 max-w-xs w-full text-left"
+          style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Zap size={14} style={{ color: '#FBBF24' }} />
+            <span className="text-xs font-semibold" style={{ color: '#FBBF24' }}>Plan Pro — disponible</span>
+          </div>
+          <ul className="space-y-2">
+            {['Asistente IA con contexto de tu liga', 'Hasta 5 ligas activas', 'Equipos ilimitados', 'Clonar ligas', 'Marketplace de vendedores'].map(f => (
+              <li key={f} className="flex items-start gap-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+                <span style={{ color: 'var(--color-accent)', marginTop: 1 }}>✓</span> {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-screen" data-tour="chatbot">

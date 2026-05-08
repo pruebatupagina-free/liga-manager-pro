@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Plus, Trophy, Share2, Edit, ExternalLink, GripVertical, Copy, Image, X, Upload, Trash2 } from 'lucide-react'
+import { Plus, Trophy, Share2, Edit, ExternalLink, GripVertical, Copy, Image, X, Upload, Trash2, Zap } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import Modal from '../components/ui/Modal'
 import { estadoBadge } from '../components/ui/Badge'
 import client from '../api/client'
+import { usePlan } from '../hooks/usePlan'
 
 const DIAS = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo']
 const CRITERIOS_OPCIONES = ['diferencia_goles','goles_favor','menos_goles_contra','enfrentamiento_directo','tarjetas']
@@ -74,6 +75,7 @@ async function compressImage(file, maxDim = 900, quality = 0.82) {
 
 export default function LigasPage() {
   const qc = useQueryClient()
+  const { plan, esBasico, esSuperadmin } = usePlan()
   const [modalOpen, setModalOpen] = useState(false)
   const [shareModal, setShareModal] = useState(null)
   const [galeriaModal, setGaleriaModal] = useState(null)
@@ -232,17 +234,37 @@ export default function LigasPage() {
           <h1 className="font-display text-4xl" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>
             MIS LIGAS
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-fg-muted)' }}>{ligas.length} liga(s)</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-fg-muted)' }}>
+            {ligas.length} liga(s)
+            {esBasico && ` · Plan básico: ${ligas.length}/${plan.max_ligas}`}
+          </p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+          disabled={esBasico && ligas.length >= plan.max_ligas}
+          title={esBasico && ligas.length >= plan.max_ligas ? `Plan básico: máximo ${plan.max_ligas} liga activa` : undefined}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: 'var(--color-accent)', color: '#020617' }}
           data-tour="ligas"
         >
           <Plus size={16} /> Nueva liga
         </button>
       </div>
+
+      {esBasico && ligas.length >= plan.max_ligas && (
+        <div
+          className="rounded-2xl px-5 py-4 mb-6 flex items-center gap-4"
+          style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}
+        >
+          <Zap size={20} style={{ color: '#FBBF24', flexShrink: 0 }} />
+          <div className="flex-1">
+            <p className="text-sm font-medium" style={{ color: '#FBBF24' }}>Límite del plan básico alcanzado</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
+              El plan básico permite 1 liga activa. Actualiza al plan Pro para crear hasta 5 ligas.
+            </p>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-20" style={{ color: 'var(--color-fg-muted)' }}>Cargando...</div>
@@ -293,15 +315,18 @@ export default function LigasPage() {
                 >
                   <Image size={18} />
                 </button>
-                <button
-                  onClick={() => clonar.mutate(liga._id)}
-                  disabled={clonar.isPending}
-                  className="p-2 rounded-xl hover:bg-white/5 transition-all cursor-pointer disabled:opacity-40"
-                  style={{ color: 'var(--color-fg-muted)' }}
-                  aria-label="Clonar liga"
-                >
-                  <Copy size={18} />
-                </button>
+                {!esBasico && (
+                  <button
+                    onClick={() => clonar.mutate(liga._id)}
+                    disabled={clonar.isPending}
+                    className="p-2 rounded-xl hover:bg-white/5 transition-all cursor-pointer disabled:opacity-40"
+                    style={{ color: 'var(--color-fg-muted)' }}
+                    aria-label="Clonar liga"
+                    title="Clonar liga"
+                  >
+                    <Copy size={18} />
+                  </button>
+                )}
                 <button
                   onClick={() => openEdit(liga)}
                   className="p-2 rounded-xl hover:bg-white/5 transition-all cursor-pointer"
@@ -552,7 +577,7 @@ export default function LigasPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                {galeriaFotos.length}/20 fotos · Visible en la página pública cuando haya al menos 1 foto
+                {galeriaFotos.length}/{plan.max_galeria} fotos · Visible en la página pública cuando haya al menos 1 foto
               </p>
               <label className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-all ${uploading ? 'opacity-60 pointer-events-none' : ''}`}
                 style={{ background: 'var(--color-accent)', color: '#020617' }}>

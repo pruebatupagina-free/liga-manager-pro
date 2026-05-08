@@ -33,6 +33,18 @@ exports.create = [
       const liga = await verificarLiga(liga_id, req.user.id, req.user.rol)
       if (!liga) return res.status(403).json({ error: 'Sin acceso a esta liga' })
 
+      if (req.user.rol !== 'superadmin' && req.plan) {
+        const totalEquipos = await Equipo.countDocuments({ liga_id })
+        if (totalEquipos >= req.plan.max_equipos) {
+          return res.status(403).json({
+            error: `Tu plan ${req.planNombre} permite máximo ${req.plan.max_equipos} equipos por liga. Actualiza tu plan para agregar más.`,
+            codigo: 'LIMITE_EQUIPOS',
+            plan: req.planNombre,
+            limite: req.plan.max_equipos,
+          })
+        }
+      }
+
       const slug = slugify(nombre)
       let logoUrl = null
       if (req.file) logoUrl = await uploadToCloudinary(req.file.buffer, 'logos')

@@ -1,4 +1,5 @@
 const { Usuario } = require('../models')
+const PLANES = require('../config/planes')
 
 module.exports = async (req, res, next) => {
   try {
@@ -9,6 +10,9 @@ module.exports = async (req, res, next) => {
     if (estado === 'vencida' || estado === 'suspendida') {
       return res.status(403).json({ error: 'Licencia inactiva', estado })
     }
+    const planNombre = usuario.licencia?.plan || 'basico'
+    req.plan = PLANES[planNombre] || PLANES.basico
+    req.planNombre = planNombre
     next()
   } catch (err) {
     next(err)

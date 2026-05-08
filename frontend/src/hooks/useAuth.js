@@ -9,6 +9,15 @@ function parseJwt(token) {
   }
 }
 
+function loadUserData() {
+  try {
+    const raw = localStorage.getItem('userData')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem('token')
@@ -16,19 +25,28 @@ export function useAuth() {
     const payload = parseJwt(token)
     if (!payload || payload.exp * 1000 < Date.now()) {
       localStorage.removeItem('token')
+      localStorage.removeItem('userData')
       return null
     }
     return payload
   })
 
-  const login = useCallback((token) => {
+  const [userFull, setUserFull] = useState(loadUserData)
+
+  const login = useCallback((token, userData) => {
     localStorage.setItem('token', token)
     setUser(parseJwt(token))
+    if (userData) {
+      localStorage.setItem('userData', JSON.stringify(userData))
+      setUserFull(userData)
+    }
   }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem('token')
+    localStorage.removeItem('userData')
     setUser(null)
+    setUserFull(null)
   }, [])
 
   // Ping every 60 seconds
@@ -43,5 +61,5 @@ export function useAuth() {
     return () => clearInterval(interval)
   }, [user])
 
-  return { user, login, logout, isAuthenticated: !!user }
+  return { user, userFull, login, logout, isAuthenticated: !!user }
 }

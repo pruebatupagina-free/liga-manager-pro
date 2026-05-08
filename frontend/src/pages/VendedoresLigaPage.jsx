@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { ShoppingBag, UserPlus, Pencil, Trash2, Loader2 } from 'lucide-react'
+import { ShoppingBag, UserPlus, Pencil, Trash2, Loader2, Lock, Zap } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import { useAuth } from '../hooks/useAuth'
+import { usePlan } from '../hooks/usePlan'
 import client from '../api/client'
 
 const emptyForm = {
@@ -15,6 +16,7 @@ const emptyForm = {
 export default function VendedoresLigaPage() {
   const { liga_id } = useParams()
   const { user } = useAuth()
+  const { esBasico } = usePlan()
   const qc = useQueryClient()
   const isSuperadmin = user?.rol === 'superadmin'
 
@@ -130,6 +132,20 @@ export default function VendedoresLigaPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {esBasico && (
+        <div
+          className="rounded-2xl px-5 py-4 mb-5 flex items-start gap-4"
+          style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}
+        >
+          <Zap size={18} style={{ color: '#FBBF24', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p className="text-sm font-medium" style={{ color: '#FBBF24' }}>Marketplace disponible en Plan Pro</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
+              Con el plan Pro puedes agregar vendedores de uniformes, balones y equipamiento que venden directamente a tus equipos. Actualiza para activar el marketplace.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <ShoppingBag size={22} style={{ color: 'var(--color-accent)' }} />
@@ -137,14 +153,24 @@ export default function VendedoresLigaPage() {
             VENDEDORES
           </h1>
         </div>
-        <button
-          onClick={openCrear}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer"
-          style={{ background: 'var(--color-accent)', color: '#020617' }}
-        >
-          <UserPlus size={16} />
-          Nuevo Vendedor
-        </button>
+        {esBasico ? (
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+            style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#FBBF24', cursor: 'default' }}
+            title="Disponible en plan Pro"
+          >
+            <Lock size={14} /> Marketplace — Plan Pro
+          </div>
+        ) : (
+          <button
+            onClick={openCrear}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer"
+            style={{ background: 'var(--color-accent)', color: '#020617' }}
+          >
+            <UserPlus size={16} />
+            Nuevo Vendedor
+          </button>
+        )}
       </div>
 
       {isLoading ? (

@@ -20,6 +20,19 @@ exports.create = async (req, res, next) => {
   try {
     const { nombre, configuracion } = req.body
     if (!nombre) return res.status(400).json({ error: 'nombre requerido' })
+
+    if (req.user.rol !== 'superadmin' && req.plan) {
+      const activas = await Liga.countDocuments({ admin_id: req.user.id, estado: { $in: ['activa', 'pausada'] } })
+      if (activas >= req.plan.max_ligas) {
+        return res.status(403).json({
+          error: `Tu plan ${req.planNombre} permite máximo ${req.plan.max_ligas} liga(s) activa(s). Actualiza tu plan para crear más.`,
+          codigo: 'LIMITE_LIGAS',
+          plan: req.planNombre,
+          limite: req.plan.max_ligas,
+        })
+      }
+    }
+
     const year = new Date().getFullYear()
     let slug = `${slugify(nombre)}-${year}`
     const exists = await Liga.findOne({ slug })
@@ -68,6 +81,13 @@ exports.clonar = async (req, res, next) => {
     if (req.user.rol !== 'superadmin' && liga.admin_id.toString() !== req.user.id) {
       return res.status(403).json({ error: 'Sin acceso' })
     }
+    if (req.user.rol !== 'superadmin' && req.plan && !req.plan.puede_clonar) {
+      return res.status(403).json({
+        error: 'Clonar ligas no está disponible en el plan básico. Actualiza tu plan para usar esta función.',
+        codigo: 'LIMITE_PLAN',
+        plan: req.planNombre,
+      })
+    }
     const year = new Date().getFullYear()
     const baseName = `${liga.nombre} (copia)`
     let slug = `${slugify(baseName)}-${year}`
@@ -94,7 +114,15 @@ exports.galeriaAdd = async (req, res, next) => {
     }
     const { imagen } = req.body
     if (!imagen || !imagen.startsWith('data:image')) return res.status(400).json({ error: 'imagen requerida (base64)' })
-    if (liga.galeria.length >= 20) return res.status(400).json({ error: 'Máximo 20 fotos por galería' })
+    const maxGaleria = (req.user.rol !== 'superadmin' && req.plan) ? req.plan.max_galeria : 20
+    if (liga.galeria.length >= maxGaleria) {
+      return res.status(400).json({
+        error: `Tu plan permite máximo ${maxGaleria} fotos por galería.${maxGaleria < 20 ? ' Actualiza tu plan para subir más.' : ''}`,
+        codigo: 'LIMITE_GALERIA',
+        plan: req.planNombre,
+        limite: maxGaleria,
+      })
+    }
     liga.galeria.push(imagen)
     await liga.save()
     res.json({ galeria_count: liga.galeria.length })

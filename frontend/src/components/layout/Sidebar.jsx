@@ -1,9 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { usePlan } from '../../hooks/usePlan'
 import {
   LayoutDashboard, Trophy, Users, User, Calendar,
   DollarSign, BarChart2, Award, MessageSquare, Shield,
-  LogOut, HelpCircle, ChevronLeft, ChevronRight, ClipboardList, Newspaper, ShoppingBag, Store
+  LogOut, HelpCircle, ChevronLeft, ChevronRight, ClipboardList, Newspaper, ShoppingBag, Store, Zap
 } from 'lucide-react'
 
 const navItems = [
@@ -18,6 +19,7 @@ const adminItems = [
 
 export default function Sidebar({ collapsed, onToggle, onTourStart, liga_id }) {
   const { user, logout } = useAuth()
+  const { planNombre, esBasico, esAdmin } = usePlan()
   const navigate = useNavigate()
 
   const contextItems = liga_id ? [
@@ -139,6 +141,20 @@ export default function Sidebar({ collapsed, onToggle, onTourStart, liga_id }) {
               {user?.username}
             </div>
             <div className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{user?.rol}</div>
+            {esAdmin && (
+              <div className="mt-1.5">
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold"
+                  style={esBasico
+                    ? { background: 'rgba(251,191,36,0.15)', color: '#FBBF24', border: '1px solid rgba(251,191,36,0.3)' }
+                    : { background: 'rgba(34,197,94,0.15)', color: 'var(--color-accent)', border: '1px solid rgba(34,197,94,0.3)' }
+                  }
+                >
+                  <Zap size={10} />
+                  {planNombre.charAt(0).toUpperCase() + planNombre.slice(1)}
+                </span>
+              </div>
+            )}
           </div>
         )}
         <button

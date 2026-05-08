@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data } = await client.post('/auth/login', { email, password })
-      login(data.token)
+      login(data.token, data.user)
       const rol = data.user?.rol
       const from = location.state?.from?.pathname
       if (rol === 'superadmin') navigate('/admin', { replace: true })

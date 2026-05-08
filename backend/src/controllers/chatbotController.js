@@ -30,6 +30,14 @@ exports.mensaje = async (req, res, next) => {
     if (!liga_id || !mensaje) return res.status(400).json({ error: 'liga_id y mensaje requeridos' })
     if (!mensaje.trim()) return res.status(400).json({ error: 'Mensaje vacío' })
 
+    if (req.plan && !req.plan.puede_chatbot) {
+      return res.status(403).json({
+        error: 'El Asistente IA no está disponible en el plan básico. Actualiza tu plan para usar esta función.',
+        codigo: 'LIMITE_PLAN',
+        plan: req.planNombre,
+      })
+    }
+
     const user = await Usuario.findById(req.user.id)
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' })
 
