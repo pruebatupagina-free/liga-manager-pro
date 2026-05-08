@@ -17,7 +17,7 @@ function calcularMVP(partido, goles, jugadoresLocal, jugadoresVisitante) {
 
   // Empate con goles → aleatorio entre todos los goleadores de ambos equipos
   if (gl === gv) {
-    const goleadores = goles.filter(g => g.tipo !== 'autogol').map(g => g.jugador_id.toString())
+    const goleadores = goles.filter(g => g.tipo !== 'autogol' && g.jugador_id != null).map(g => g.jugador_id.toString())
     const uniqueGoleadores = [...new Set(goleadores)]
     return uniqueGoleadores.length ? aleatorio(uniqueGoleadores) : aleatorio(todosJugadores)
   }
@@ -34,6 +34,7 @@ function calcularMVP(partido, goles, jugadoresLocal, jugadoresVisitante) {
   // Contar goles por jugador en equipo ganador
   const conteo = {}
   golesGanador.forEach(g => {
+    if (!g.jugador_id) return
     const id = g.jugador_id.toString()
     conteo[id] = (conteo[id] || 0) + 1
   })
