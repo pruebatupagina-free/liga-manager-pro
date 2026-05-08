@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Expo Go QR</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; background:#0f172a; font-family:sans-serif; color:#f8fafc; }
+    #qr { background:white; padding:20px; border-radius:12px; margin:20px 0; }
+    h1 { font-size:22px; margin-bottom:4px; }
+    p { color:#94a3b8; font-size:14px; margin:0 0 16px; }
+    .url { background:#1e293b; border:1px solid #334155; border-radius:8px; padding:12px 20px; font-size:16px; font-weight:600; color:#22c55e; margin-top:16px; }
+    .steps { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; max-width:340px; margin-top:24px; }
+    .steps li { color:#94a3b8; font-size:13px; margin-bottom:8px; line-height:1.5; }
+    .steps li b { color:#f8fafc; }
+  </style>
+</head>
+<body>
+  <h1>⚽ LigaManager Pro</h1>
+  <p>Escanea con Expo Go para abrir la app</p>
+  <div id="qr"></div>
+  <div class="url" id="expUrl"></div>
+  <div class="steps">
+    <ol>
+      <li>Instala <b>Expo Go</b> en tu celular (App Store / Play Store)</li>
+      <li>Abre Expo Go → toca el icono de <b>escanear</b></li>
+      <li>Escanea este código QR</li>
+      <li>La app se descarga y abre automáticamente ✅</li>
+    </ol>
+  </div>
+  <script>
+    const url = 'exp://192.168.1.16:8081'
+    document.getElementById('expUrl').textContent = url
+    new QRCode(document.getElementById('qr'), {
+      text: url,
+      width: 220,
+      height: 220,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    })
+  </script>
+</body>
+</html>

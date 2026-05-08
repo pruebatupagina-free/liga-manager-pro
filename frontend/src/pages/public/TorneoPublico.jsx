@@ -204,16 +204,28 @@ function TabTabla({ username, ligaSlug, liga }) {
 
 function PartidoConcentrado({ partido: p }) {
   const jugado = p.estado === 'jugado' || p.estado === 'wo'
-  const estadoColor = { jugado: '#22C55E', pendiente: '#94A3B8', wo: '#F59E0B', cancelado: '#EF4444' }
+  const enCurso = p.estado === 'en_curso'
+  const estadoColor = { jugado: '#22C55E', pendiente: '#94A3B8', en_curso: '#EF4444', wo: '#F59E0B', cancelado: '#EF4444' }
   const col = estadoColor[p.estado] || '#94A3B8'
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
+    <div className="rounded-2xl p-4" style={{
+      background: 'var(--color-primary)',
+      border: enCurso ? '1px solid #EF444444' : '1px solid var(--color-border)',
+    }}>
       <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
         {p.hora ? <span className="font-mono">{p.hora}</span> : <span />}
         <div className="flex items-center gap-2">
           {p.cancha && <span>Cancha {p.cancha}</span>}
-          <span className="px-2 py-0.5 rounded-full capitalize" style={{ background: col + '22', color: col }}>{p.estado}</span>
+          {enCurso ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
+              style={{ background: '#EF444422', color: '#EF4444' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+              EN VIVO
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded-full capitalize" style={{ background: col + '22', color: col }}>{p.estado}</span>
+          )}
         </div>
       </div>
 
@@ -225,9 +237,9 @@ function PartidoConcentrado({ partido: p }) {
             {p.equipo_local_id?.logo ? <img src={p.equipo_local_id.logo} alt="" className="w-full h-full object-cover" /> : p.equipo_local_id?.nombre?.charAt(0)}
           </div>
         </div>
-        <div className="px-4 py-2 rounded-xl text-center min-w-[72px]" style={{ background: 'var(--color-secondary)' }}>
-          {jugado
-            ? <span className="font-display text-2xl" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{p.goles_local} – {p.goles_visitante}</span>
+        <div className="px-4 py-2 rounded-xl text-center min-w-[72px]" style={{ background: enCurso ? '#EF444418' : 'var(--color-secondary)' }}>
+          {jugado || enCurso
+            ? <span className="font-display text-2xl" style={{ color: enCurso ? '#EF4444' : 'var(--color-fg)', fontFamily: 'var(--font-display)' }}>{p.goles_local ?? 0} – {p.goles_visitante ?? 0}</span>
             : <span className="text-sm font-bold" style={{ color: 'var(--color-fg-muted)' }}>VS</span>
           }
         </div>
@@ -275,6 +287,8 @@ function TabJornadas({ username, ligaSlug, jornadas }) {
     queryKey: ['pub-jornada', username, ligaSlug, jornadaNum],
     queryFn: () => client.get(`/public/${username}/${ligaSlug}/jornada/${jornadaNum}`).then(r => r.data),
     enabled: !!jornadaNum,
+    refetchInterval: (query) =>
+      query.state.data?.partidos?.some(p => p.estado === 'en_curso') ? 10000 : false,
   })
 
   if (!jornadas.length) return <EmptyState icon={Calendar} text="No hay jornadas configuradas" />

@@ -12,9 +12,10 @@ const partidoSchema = new mongoose.Schema(
     goles_visitante: { type: Number, default: null },
     estado: {
       type: String,
-      enum: ['pendiente', 'jugado', 'cancelado', 'wo', 'reprogramado'],
+      enum: ['pendiente', 'en_curso', 'jugado', 'cancelado', 'wo', 'reprogramado'],
       default: 'pendiente',
     },
+    minuto_actual: { type: Number, default: 0 },
     tipo: {
       type: String,
       enum: ['normal', 'extra', 'revancha'],

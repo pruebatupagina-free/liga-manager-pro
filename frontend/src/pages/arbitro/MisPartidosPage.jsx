@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import { ClipboardList, ExternalLink, CheckCircle2 } from 'lucide-react'
+import { ClipboardList, ExternalLink, CheckCircle2, Radio } from 'lucide-react'
 import { estadoBadge } from '../../components/ui/Badge'
 import client from '../../api/client'
 
@@ -12,6 +12,7 @@ function PartidoCard({ p, onCapturar, isPending }) {
   const jornada = p.jornada_id
   const liga = p.liga_id
   const isPendiente = p.estado === 'pendiente'
+  const isEnCurso = p.estado === 'en_curso'
 
   return (
     <div className="rounded-2xl p-4 space-y-3 glow-card" style={{ background: 'var(--color-primary)' }}>
@@ -57,15 +58,19 @@ function PartidoCard({ p, onCapturar, isPending }) {
         </p>
       </div>
 
-      {isPendiente && (
+      {(isPendiente || isEnCurso) && (
         <button
           onClick={() => onCapturar(p._id)}
           disabled={isPending}
           className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
-          style={{ background: 'var(--color-accent)', color: '#020617' }}
+          style={{
+            background: isEnCurso ? '#EF444422' : 'var(--color-accent)',
+            color: isEnCurso ? '#EF4444' : '#020617',
+            border: isEnCurso ? '1px solid #EF444444' : 'none',
+          }}
         >
-          <ExternalLink size={14} />
-          {isPending ? 'Abriendo...' : 'Capturar resultado'}
+          {isEnCurso ? <Radio size={14} /> : <ExternalLink size={14} />}
+          {isPending ? 'Abriendo...' : isEnCurso ? 'Continuar partido en vivo' : 'Iniciar / capturar resultado'}
         </button>
       )}
 
@@ -83,7 +88,8 @@ export default function MisPartidosPage() {
   const { data: partidos = [], isLoading } = useQuery({
     queryKey: ['mis-partidos'],
     queryFn: () => client.get('/arbitro/mis-partidos').then(r => r.data),
-    refetchInterval: 30000,
+    refetchInterval: (query) =>
+      query.state.data?.some(p => p.estado === 'en_curso') ? 10000 : 30000,
   })
 
   const generarToken = useMutation({
@@ -95,8 +101,9 @@ export default function MisPartidosPage() {
     onError: () => toast.error('Error al abrir el panel de captura'),
   })
 
+  const enVivo = partidos.filter(p => p.estado === 'en_curso')
   const pendientes = partidos.filter(p => p.estado === 'pendiente')
-  const jugados = partidos.filter(p => p.estado !== 'pendiente')
+  const jugados = partidos.filter(p => p.estado !== 'pendiente' && p.estado !== 'en_curso')
 
   if (isLoading) return (
     <div className="p-6 text-center py-20" style={{ color: 'var(--color-fg-muted)' }}>
@@ -127,6 +134,26 @@ export default function MisPartidosPage() {
           {partidos.length} partido(s) asignado(s)
         </p>
       </div>
+
+      {enVivo.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5"
+            style={{ color: '#EF4444' }}>
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block" />
+            EN VIVO ({enVivo.length})
+          </h2>
+          <div className="space-y-3">
+            {enVivo.map(p => (
+              <PartidoCard
+                key={p._id}
+                p={p}
+                onCapturar={id => generarToken.mutate(id)}
+                isPending={generarToken.isPending}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {pendientes.length > 0 && (
         <div className="mb-6">
